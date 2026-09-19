@@ -1,0 +1,12 @@
+# Request
+# Command: "get" returns the queue, "set" replaces it, and "pop" removes the first waypoint.
+string command
+
+# For "set": semicolon-separated latitude,longitude pairs (e.g. "42.0,-71.0;42.1,-71.1").
+# Ignored for "get" and "pop".
+string argument
+
+---
+# Response
+string message   # Queue contents for "get"; otherwise, a status or error message.
+bool success     # True if the command completed successfully.
