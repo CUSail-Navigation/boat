@@ -124,7 +124,7 @@ this shell; ROS 2 does not need to be installed on your host.
 In the container shell opened above, run the package tests and inspect the results:
 
 ```bash
-colcon test --return-code-on-test-failure
+colcon test --python-testing pytest --return-code-on-test-failure
 colcon test-result --verbose
 ```
 
