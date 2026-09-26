@@ -1,4 +1,4 @@
-"""Boat limits, Teensy node defaults, and serial protocol constants."""
+"""Boat limits, node settings, and serial protocol constants."""
 
 from dataclasses import dataclass
 
@@ -46,3 +46,5 @@ class _Teensy:
 PHYSICAL = _Physical()
 SERIAL = _Serial()
 TEENSY = _Teensy()
+
+RL_INFERENCE_PERIOD_SECONDS = 0.2
