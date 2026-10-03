@@ -1,5 +1,7 @@
 """ROS interfaces for the reinforcement learning sailing algorithm."""
 
+import math
+
 import rclpy
 from geometry_msgs.msg import Vector3
 from rclpy.executors import ExternalShutdownException
@@ -7,7 +9,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
 from std_msgs.msg import Float32, Int32, UInt8
 
-from sailing.constants import RL_INFERENCE_PERIOD_SECONDS
+from sailing.constants import EARTH_RADIUS_METERS, RL_INFERENCE_PERIOD_SECONDS
 
 
 class ReinforcementLearning(Node):
@@ -18,6 +20,8 @@ class ReinforcementLearning(Node):
 
         # None distinguishes missing observations from legitimate zero values.
         self.gps = None
+        self.gps_time = None
+        self.boat_speed = None
         self.imu = None
         self.wind = None
         self.wind_speed = None
@@ -26,6 +30,7 @@ class ReinforcementLearning(Node):
         self.actual_rudder_angle = None
         self.actual_jib_angle = None
         self.actual_jib_side_flag = None
+        self.last_action = [0.0, 0.0]
 
         self.mainsail_angle_pub = self.create_publisher(Int32, "mainsail_angle", 10)
         self.rudder_angle_pub = self.create_publisher(Int32, "rudder_angle", 10)
@@ -54,14 +59,32 @@ class ReinforcementLearning(Node):
 
         # TODO: Load the trained policy and initialize any recurrent model
         # state. Also set RL_INFERENCE_PERIOD_SECONDS in constants.py.
+        
         self.timer = self.create_timer(RL_INFERENCE_PERIOD_SECONDS, self.run_inference)
         self.get_logger().info(
             "Reinforcement learning scaffold started; inference is not implemented."
         )
 
     def gps_callback(self, msg):
-        """Cache the latest GPS message."""
+        """Cache the latest GPS message and derive boat speed from the last fix.
+
+        Our speed over ground comes from distnace between each callback 
+        divided by time between them. At low speeds, speed may become unreliable
+        due to GPS position noise. REMEMBER!
+        """
+        now = self.get_clock().now()
+        if self.gps is not None:
+            dt = (now - self.gps_time).nanoseconds / 1e9
+            # Guard against dividing by zero if two fixes arrive together.
+            if dt > 0:
+                # Flat-earth approximation, accurate over a few metres.
+                north = math.radians(msg.latitude - self.gps.latitude)
+                east = math.radians(msg.longitude - self.gps.longitude) * math.cos(
+                    math.radians(msg.latitude)
+                )
+                self.boat_speed = EARTH_RADIUS_METERS * math.hypot(north, east) / dt
         self.gps = msg
+        self.gps_time = now
 
     def imu_callback(self, msg):
         """Cache roll, pitch, and yaw in degrees."""
@@ -101,7 +124,7 @@ class ReinforcementLearning(Node):
         - Waypoint location: self.current_waypoint.latitude and self.current_waypoint.longitude.
         - Heading (degrees): self.imu.z.
         - Time: not implemented
-        - Boat speed: not implemented
+        - Boat speed (metres per second): self.boat_speed.
         - Previous action: not implemented
 
         TODO: Preprocess these inputs and run the trained policy.
@@ -128,9 +151,14 @@ class ReinforcementLearning(Node):
                 self.wind,
                 self.wind_speed,
                 self.current_waypoint,
+                self.boat_speed,
             )
         ):
             return
+
+
+        ### after everything else
+        self.last_action = [rudder_angle/45, mainsail_angle/90]
 
         raise NotImplementedError
 
