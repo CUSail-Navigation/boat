@@ -15,7 +15,7 @@ class Teensy(Node):
     with the Teensy, reads telemetry (wind, angles, dropped packets), and sends
     control commands from ROS subscriptions.
 
-    Command topics (namespace-relative): ``sail`` (Int32), ``rudder_angle``
+    Command topics (namespace-relative): ``mainsail_angle`` (Int32), ``rudder_angle``
     (Int32), ``jib_angle`` (Int32), ``jib_side_flag`` (UInt8: 0 = port side,
     1 = starboard side).
     """
@@ -56,9 +56,7 @@ class Teensy(Node):
         self.desired_jib_side_flag = PHYSICAL.JIB_SIDE_PORT
 
         # Create telemetry publishers.
-        self.actual_mainsail_angle_pub = self.create_publisher(
-            Int32, "actual_sail_angle", 10
-        )
+        self.actual_mainsail_angle_pub = self.create_publisher(Int32, "actual_mainsail_angle", 10)
         self.actual_rudder_angle_pub = self.create_publisher(
             Int32, "actual_rudder_angle", 10
         )
@@ -72,7 +70,7 @@ class Teensy(Node):
         self.timer = self.create_timer(self.telemetry_poll_period, self.check_telemetry)
 
         # Subscribe to actuator commands.
-        self.create_subscription(Int32, "sail", self.mainsail_angle_callback, 10)
+        self.create_subscription(Int32, "mainsail_angle", self.mainsail_angle_callback, 10)
         self.create_subscription(Int32, "rudder_angle", self.rudder_angle_callback, 10)
         self.create_subscription(Int32, "jib_angle", self.jib_angle_callback, 10)
         self.create_subscription(
