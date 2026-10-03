@@ -51,7 +51,7 @@ def spin_until(executor, predicate):
 def observe_telemetry(node, peer, executor):
     received = {}
     topics = {
-        "actual_sail_angle": Int32,
+        "actual_mainsail_angle": Int32,
         "actual_rudder_angle": Int32,
         "actual_jib_angle": Int32,
         "actual_jib_side_flag": UInt8,
@@ -81,7 +81,7 @@ def test_command_topics_send_full_latest_command(ros_node):
     node, peer, hardware, executor = ros_node
     node.timer.cancel()
     commands = [
-        ("sail", Int32, 20),
+        ("mainsail_angle", Int32, 20),
         ("rudder_angle", Int32, -10),
         ("jib_angle", Int32, 30),
         ("jib_side_flag", UInt8, 1),
@@ -117,7 +117,7 @@ def test_timer_publishes_complete_telemetry(ros_node):
 
     hardware.read_telemetry.side_effect = read
     expected = {
-        "actual_sail_angle": 20,
+        "actual_mainsail_angle": 20,
         "actual_rudder_angle": -10,
         "actual_jib_angle": 30,
         "actual_jib_side_flag": 1,

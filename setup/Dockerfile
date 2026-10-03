@@ -1,6 +1,9 @@
 # Local ROS 2 development environment.
 FROM ros:lyrical-ros-base-resolute
 
+# Add Ruff for Python formatting and linting.
+COPY --from=ghcr.io/astral-sh/ruff:0.14.6 /ruff /usr/local/bin/ruff
+
 # Compiler, ROS tooling, lint checks and dashboard connectivity.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     bash-completion \
