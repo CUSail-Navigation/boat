@@ -47,12 +47,12 @@ Below are the steps to set up your development environment to upload code and ob
 
 ### Prerequisites: 
 - [VSCode](https://code.visualstudio.com/download) or [CLion](https://www.jetbrains.com/clion/) is installed.
-- The [sailbot](https://github.com/CUSail-Navigation/sailbot) repository is cloned.
+- The [boat](https://github.com/CUSail-Navigation/boat) repository is cloned.
 
 ### Steps:
 1. In VSCode, click "Extensions" on the left-hand side toolbar and search for PlatformIO IDE.  
    In CLion, click "File → Plugins" and search for PlatformIO for CLion.
-2. Open the `teensy/` folder within the sailbot repository. Make sure the `teensy/` folder is the project root.
+2. Open the `teensy/` folder within the boat repository. Make sure the `teensy/` folder is the project root.
 3. (VSCode) At the bottom of your screen in the blue toolbar, you should see a check, arrow, and serial monitor icon.
    - If you would just like to compile code but not upload to the Teensy, press the check. 
    - If you would like to upload to the Teensy, press the arrow. 
@@ -84,5 +84,5 @@ Make sure you have:
 1. Run `ls /dev` or `lsusb` to view ports accessible by WSL. The Teensy will most likely appear as `/dev/ttyACM0`.
 2. Run the following command in WSL to expose the shared port with the docker image:
 ```
-docker run -it --rm --name ros2_container -v $(pwd)/src:/home/ros2_user/ros2_ws/src --device=<port>  ros2_humble_custom 
+docker run -it --rm --name boat-dev -v "$(pwd)/src:/home/ros2_user/ros2_ws/src" --device=<port> boat-local
 ```
