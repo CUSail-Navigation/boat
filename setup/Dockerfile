@@ -21,6 +21,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-lyrical-ament-pep257 \
     ros-lyrical-ament-lint-auto \
     ros-lyrical-ament-lint-common \
+    ros-lyrical-builtin-interfaces \
+    ros-lyrical-service-msgs \
+    ros-lyrical-rosidl-typesupport-fastrtps-c \
+    ros-lyrical-rosidl-typesupport-fastrtps-cpp \
     ros-lyrical-rosbridge-server \
     && rm -rf /var/lib/apt/lists/*
 
