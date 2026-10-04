@@ -14,7 +14,7 @@ __pycache__/
 .vscode/
 .idea/
 
-# Project-specific.
+# Project specific.
 /lib/
 *.pt
 sys/sys.log
