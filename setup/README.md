@@ -1,6 +1,6 @@
 # Dockerized ROS 2 Boat Setup
 
-This tutorial will guide you through the steps to clone a ROS 2 project repository via SSH, build a Docker image, and run it in a Docker container. The container uses **ROS 2 Lyrical Luth on Ubuntu 26.04 (Resolute)**.
+This tutorial will guide you through the steps to clone a ROS 2 project repository via SSH, build a Docker image, and run it in a Docker container. The container uses **ROS 2 Humble Hawksbill on Ubuntu 22.04 (Jammy Jellyfish)** Note that the Ubuntu version matches JetPack 6.
 
 ---
 
