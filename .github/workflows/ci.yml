@@ -45,7 +45,7 @@ jobs:
             boat-ci bash -c '
               set -e
               test_status=0
-              colcon test --return-code-on-test-failure || test_status=$?
+              colcon test --python-testing pytest --return-code-on-test-failure || test_status=$?
               colcon test-result --verbose
               exit "$test_status"
             '
