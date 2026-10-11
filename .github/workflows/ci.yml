@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
+  ros-lint:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -25,18 +25,18 @@ jobs:
         uses: astral-sh/ruff-action@v4.0.0
         with:
           version: "0.14.6"
-          args: "check --output-format=github"
+          args: "check --output-format=github src"
       - name: Check Python formatting
-        run: ruff format --check .
+        run: ruff format --check src
 
-  build:
+  ros-build:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Build Lyrical development image
+      - name: Build ROS development image
         run: docker build --pull -t boat-ci setup
       - name: Build workspace and run package tests
         run: |
