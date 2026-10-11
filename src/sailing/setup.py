@@ -19,5 +19,11 @@ setup(
     maintainer_email="ericcai32@gmail.com",
     description="Sailing control and hardware interfaces.",
     license="Apache License 2.0",
-    entry_points={"console_scripts": ["teensy_node = sailing.teensy.teensy_node:main"]},
+    entry_points={
+        "console_scripts": [
+            "teensy_node = sailing.teensy.teensy_node:main",
+            "reinforcement_learning_node = "
+            "sailing.reinforcement_learning.reinforcement_learning_node:main",
+        ]
+    },
 )
