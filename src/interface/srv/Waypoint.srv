@@ -1,12 +1,11 @@
-# Request
-# Command: "get" returns the queue, "set" replaces it, and "pop" removes the first waypoint.
+# Commands: "get", "set", "pop". Only set uses expected_version and waypoints.
 string command
-
-# For "set": semicolon-separated latitude,longitude pairs (e.g. "42.0,-71.0;42.1,-71.1").
-# Ignored for "get" and "pop".
-string argument
-
+# A stale version is rejected. An empty waypoint array clears the queue.
+string expected_version
+Waypoint[] waypoints
 ---
-# Response
-string message   # Queue contents for "get"; otherwise, a status or error message.
-bool success     # True if the command completed successfully.
+bool success
+string error
+# Current queue snapshot, including after rejected requests.
+string version
+Waypoint[] waypoints

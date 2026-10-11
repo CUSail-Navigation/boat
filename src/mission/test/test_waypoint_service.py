@@ -6,11 +6,11 @@ from unittest.mock import Mock
 
 import pytest
 import rclpy
-from interface.srv import Waypoint
+from interface.msg import Waypoint
+from interface.srv import Waypoint as WaypointSrv
 from mission.waypoint_service import WaypointService
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
-from sensor_msgs.msg import NavSatFix
 
 
 def spin_until(executor, predicate):
@@ -35,11 +35,11 @@ def queue(request, monkeypatch):
         executor = SingleThreadedExecutor()
         executor.add_node(node)
         executor.add_node(peer)
-        client = peer.create_client(Waypoint, "mutate_waypoint_queue")
+        client = peer.create_client(WaypointSrv, "mutate_waypoint_queue")
         assert client.wait_for_service(timeout_sec=10)
         received = []
         subscription = peer.create_subscription(
-            NavSatFix, "current_waypoint", received.append, 10
+            Waypoint, "current_waypoint", received.append, 10
         )
         spin_until(
             executor,
@@ -50,9 +50,13 @@ def queue(request, monkeypatch):
         publisher = Mock(wraps=node.waypoint_publisher)
         monkeypatch.setattr(node, "waypoint_publisher", publisher)
 
-        def call(command, argument=""):
+        def call(command, expected_version="", waypoints=None):
             future = client.call_async(
-                Waypoint.Request(command=command, argument=argument)
+                WaypointSrv.Request(
+                    command=command,
+                    expected_version=expected_version,
+                    waypoints=waypoints or [],
+                )
             )
             spin_until(executor, future.done)
             return future.result()
@@ -68,81 +72,121 @@ def queue(request, monkeypatch):
         rclpy.shutdown()
 
 
-def test_default_queue_is_empty_and_pop_fails(queue):
-    call, _, _, publisher = queue
+def read(call):
     response = call("get")
     assert response.success
-    assert response.message == "[]"
+    return {"version": response.version, "waypoints": response.waypoints}
+
+
+def point(key, latitude=42.0, longitude=-71.0):
+    return Waypoint(id=key, latitude=float(latitude), longitude=float(longitude))
+
+
+def replace(call, points):
+    return call("set", read(call)["version"], points)
+
+
+def test_default_queue_is_empty_and_pop_fails(queue):
+    call, _, _, publisher = queue
+    state = read(call)
+    assert state["waypoints"] == []
+    assert isinstance(state["version"], str) and state["version"]
     assert not call("pop").success
-    assert call("get").message == "[]"
+    assert read(call) == state
     publisher.publish.assert_not_called()
 
 
 @pytest.mark.parametrize("queue", [["42.0,-71.0", "42.1,-71.1"]], indirect=True)
 def test_initial_waypoints_are_loaded_in_order(queue):
     call, _, _, _ = queue
-    response = call("get")
-    assert response.success
-    assert response.message == "[(42.0, -71.0), (42.1, -71.1)]"
-
-
-def test_set_replaces_queue_and_publishes_only_first_waypoint(queue):
-    call, received, executor, _ = queue
-    assert call("set", "42.0,-71.0;42.1,-71.1").success
-    spin_until(executor, lambda: len(received) == 1)
-    assert call("get").message == "[(42.0, -71.0), (42.1, -71.1)]"
-    assert call("set", "43.0,-72.0").success
-    spin_until(executor, lambda: len(received) == 2)
-    assert call("get").message == "[(43.0, -72.0)]"
-    assert [(msg.latitude, msg.longitude) for msg in received] == [
-        (42.0, -71.0),
-        (43.0, -72.0),
+    items = read(call)["waypoints"]
+    assert [(w.latitude, w.longitude) for w in items] == [
+        (42, -71),
+        (42.1, -71.1),
     ]
-    for msg in received:
-        assert msg.header.frame_id == "map"
-        assert msg.header.stamp.sec > 0
-        assert msg.altitude == 0.0
-        assert msg.position_covariance_type == NavSatFix.COVARIANCE_TYPE_UNKNOWN
+    assert len({w.id for w in items}) == 2
+    assert read(call)["waypoints"] == items
 
 
-def test_pop_advances_target_and_final_pop_publishes_nothing(queue):
+def test_set_reorders_deletes_and_clears_queue(queue):
     call, received, executor, publisher = queue
-    assert call("set", "42.0,-71.0;42.1,-71.1").success
+    points = [point("a"), point("b", 43, -72), point("c", 43, -72)]
+    for items in (points, list(reversed(points)), [points[1]]):
+        previous = read(call)
+        response = replace(call, items)
+        assert response.success
+        state = {"version": response.version, "waypoints": response.waypoints}
+        assert state == read(call)
+        assert state["waypoints"] == items
+        assert state["version"] != previous["version"]
+    spin_until(executor, lambda: len(received) == 3)
+    assert [(msg.latitude, msg.longitude) for msg in received] == [
+        (42, -71),
+        (43, -72),
+        (43, -72),
+    ]
+    assert received == [points[0], points[2], points[1]]
+    publisher.reset_mock()
+    assert replace(call, []).success
+    assert read(call)["waypoints"] == []
+    publisher.publish.assert_not_called()
+
+
+def test_pop_advances_target_and_rejects_stale_edits(queue):
+    call, received, executor, publisher = queue
+    assert replace(call, [point("a"), point("b", 43, -72)]).success
+    before = read(call)
     spin_until(executor, lambda: len(received) == 1)
     assert call("pop").success
     spin_until(executor, lambda: len(received) == 2)
-    assert (received[-1].latitude, received[-1].longitude) == (42.1, -71.1)
-    assert call("get").message == "[(42.1, -71.1)]"
+    after = read(call)
+    assert after["waypoints"] == [point("b", 43, -72)]
+    assert before["version"] != after["version"]
+    assert received[-1] == point("b", 43, -72)
     publisher.reset_mock()
+    response = call("set", before["version"], before["waypoints"])
+    assert not response.success
+    assert response.error == "Queue changed; refresh before editing"
+    assert read(call) == after
     assert call("pop").success
-    assert call("get").message == "[]"
+    assert read(call)["waypoints"] == []
     assert not call("pop").success
-    # Preserve the current contract: no empty-state / NaN message is emitted.
     publisher.publish.assert_not_called()
 
 
-@pytest.mark.parametrize(
-    "argument", ["", "invalid", "42.0", "42.0,-71.0,0", "43.0,-72.0;bad", "43.0,-72.0;"]
-)
-def test_invalid_set_preserves_previous_queue_without_publication(queue, argument):
-    call, received, executor, publisher = queue
-    assert call("set", "42.0,-71.0").success
-    spin_until(executor, lambda: len(received) == 1)
+def test_rejected_requests_are_atomic(queue):
+    call, _, _, publisher = queue
+    assert replace(call, [point("original")]).success
+    state = read(call)
+    invalid_items = [
+        [point("a"), point("a")],
+        [point("")],
+        [point("x" * 101)],
+        [point("a", 91)],
+        [point("a", float("nan"))],
+        [point("a", float("inf"))],
+        [point("a", longitude=181)],
+        [point("a"), point("b", longitude=-181)],
+    ]
+    requests = [("set", state["version"], items) for items in invalid_items]
+    requests += [("set", "", []), ("set", "stale", []), ("clear", "", [])]
     publisher.reset_mock()
-    response = call("set", argument)
-    assert not response.success
-    assert "Failed to update waypoints" in response.message
-    assert call("get").message == "[(42.0, -71.0)]"
-    publisher.publish.assert_not_called()
+    for command, version, items in requests:
+        response = call(command, version, items)
+        assert not response.success, (command, version, items)
+        assert response.error
+        assert {"version": response.version, "waypoints": response.waypoints} == state
+        assert read(call) == state
+        publisher.publish.assert_not_called()
 
 
-def test_unknown_command_preserves_queue_without_publication(queue):
-    call, received, executor, publisher = queue
-    assert call("set", "42.0,-71.0").success
-    spin_until(executor, lambda: len(received) == 1)
-    publisher.reset_mock()
-    response = call("clear")
-    assert not response.success
-    assert "Invalid command" in response.message
-    assert call("get").message == "[(42.0, -71.0)]"
-    publisher.publish.assert_not_called()
+def test_version_from_another_node_is_rejected(queue):
+    call, _, _, _ = queue
+    state = read(call)
+    another = WaypointService()
+    try:
+        assert another.version != state["version"]
+        with pytest.raises(ValueError, match="Queue changed"):
+            another._set(state["version"], state["waypoints"])
+    finally:
+        another.destroy_node()

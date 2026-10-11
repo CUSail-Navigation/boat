@@ -10,9 +10,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     python3-numpy \
     python3-pytest \
-    ros-humble-builtin-interfaces \
-    ros-humble-rosidl-typesupport-fastrtps-c \
-    ros-humble-rosidl-typesupport-fastrtps-cpp \
     ros-humble-rosbridge-server \
     && rm -rf /var/lib/apt/lists/*
 
