@@ -6,6 +6,7 @@ find_package(ament_cmake REQUIRED)
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(smoke test/test_smoke.py TIMEOUT 30)
+  ament_add_pytest_test(rosbridge test/test_rosbridge.py TIMEOUT 30)
 endif()
 
 ament_package()
