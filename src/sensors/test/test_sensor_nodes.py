@@ -77,7 +77,7 @@ def test_sensor_topics_and_message_mapping(sensors):
             kind, topic, lambda msg, topic=topic: received.update({topic: msg}), 10
         )
         for topic, kind in (
-            ("wind", Int32),
+            ("wind_angle", Int32),
             ("wind_speed", Float32),
             ("gps", NavSatFix),
             ("imu", Vector3),
@@ -87,7 +87,7 @@ def test_sensor_topics_and_message_mapping(sensors):
     assert all(
         sub.topic_name.startswith(peer.get_namespace() + "/") for sub in subscriptions
     )
-    assert received["wind"].data == 270
+    assert received["wind_angle"].data == 270
     assert received["wind_speed"].data == 2.5
     assert received["gps"].latitude == 42.8
     assert received["gps"].longitude == -77.0

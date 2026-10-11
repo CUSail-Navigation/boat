@@ -17,7 +17,8 @@ class Teensy(Node):
 
     Command topics (namespace-relative): ``mainsail_angle`` (Int32), ``rudder_angle``
     (Int32), ``jib_angle`` (Int32), ``jib_side_flag`` (UInt8: 0 = port side,
-    1 = starboard side).
+    1 = starboard side). Feedback topics use the ``reported_`` prefix;
+    ``dropped_packets`` publishes the Teensy packet-drop count.
     """
 
     def __init__(self):
@@ -56,13 +57,17 @@ class Teensy(Node):
         self.desired_jib_side_flag = PHYSICAL.JIB_SIDE_PORT
 
         # Create telemetry publishers.
-        self.actual_mainsail_angle_pub = self.create_publisher(Int32, "actual_mainsail_angle", 10)
-        self.actual_rudder_angle_pub = self.create_publisher(
-            Int32, "actual_rudder_angle", 10
+        self.reported_mainsail_angle_pub = self.create_publisher(
+            Int32, "reported_mainsail_angle", 10
         )
-        self.actual_jib_angle_pub = self.create_publisher(Int32, "actual_jib_angle", 10)
-        self.actual_jib_side_flag_pub = self.create_publisher(
-            UInt8, "actual_jib_side_flag", 10
+        self.reported_rudder_angle_pub = self.create_publisher(
+            Int32, "reported_rudder_angle", 10
+        )
+        self.reported_jib_angle_pub = self.create_publisher(
+            Int32, "reported_jib_angle", 10
+        )
+        self.reported_jib_side_flag_pub = self.create_publisher(
+            UInt8, "reported_jib_side_flag", 10
         )
         self.dropped_packets_pub = self.create_publisher(Int32, "dropped_packets", 10)
 
@@ -112,19 +117,19 @@ class Teensy(Node):
         if received:
             mainsail_angle_msg = Int32()
             mainsail_angle_msg.data = data["mainsail_angle"]
-            self.actual_mainsail_angle_pub.publish(mainsail_angle_msg)
+            self.reported_mainsail_angle_pub.publish(mainsail_angle_msg)
 
             rudder_angle_msg = Int32()
             rudder_angle_msg.data = data["rudder_angle"]
-            self.actual_rudder_angle_pub.publish(rudder_angle_msg)
+            self.reported_rudder_angle_pub.publish(rudder_angle_msg)
 
             jib_angle_msg = Int32()
             jib_angle_msg.data = data["jib_angle"]
-            self.actual_jib_angle_pub.publish(jib_angle_msg)
+            self.reported_jib_angle_pub.publish(jib_angle_msg)
 
             jib_side_flag_msg = UInt8()
             jib_side_flag_msg.data = data["jib_side_flag"]
-            self.actual_jib_side_flag_pub.publish(jib_side_flag_msg)
+            self.reported_jib_side_flag_pub.publish(jib_side_flag_msg)
 
             dropped_packets_msg = Int32()
             dropped_packets_msg.data = data["dropped_packets"]

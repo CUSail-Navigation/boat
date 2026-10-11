@@ -26,7 +26,7 @@ class LicorNode(Node):
             period = self.get_parameter("timer_period").value
             self.min_speed = self.get_parameter("min_speed").value
             self.alpha = self.get_parameter("alpha").value
-            self.publisher = self.create_publisher(Int32, "wind", 10)
+            self.publisher = self.create_publisher(Int32, "wind_angle", 10)
             self.speed_publisher = self.create_publisher(Float32, "wind_speed", 10)
             self.last_direction = 0
             self.filtered_u = 0.0
