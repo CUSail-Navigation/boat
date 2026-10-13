@@ -19,6 +19,7 @@ def generate_launch_description():
             Node(
                 package="rosbridge_server",
                 executable="rosbridge_websocket",
+                prefix="/usr/bin/python3",
                 parameters=[{"port": 9090}],
                 output="screen",
             ),
