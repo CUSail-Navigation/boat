@@ -108,10 +108,9 @@ that threshold. Sensor installation determines the relative wind direction zero.
 
 VectorNav expects the original comma-separated ASCII stream with yaw, pitch,
 roll, latitude and longitude at zero-based fields 4–8. Other output layouts and
-binary packets are unsupported. As in sailbot main, published yaw is
-`(450 - sensor_yaw) % 360` (east=0, north=90 for a north-zero clockwise input).
-Pitch and roll are unchanged. This deliberately preserves the deployed conversion,
-not the conflicting north-zero comment in the old driver. GPS covariance is
+binary packets are unsupported. Published yaw converts the sensor's compass bearing to [-180, 180):
+east=0, north=90, west=-180, south=-90, increasing counter-clockwise.
+The conversion is `((90 - raw_yaw + 180) % 360) - 180`. Pitch and roll are unchanged. GPS covariance is
 unknown, altitude is zero (the old default, not a measured altitude), and INS/GNSS fix status is not decoded by this migration.
 The parser retains the old layout assumption and does not validate checksums.
 
@@ -153,8 +152,7 @@ GPS headers remain empty, altitude remains zero, VectorNav remains fixed at
 115200 baud, and per-publication informational logging matches the old driver.
 No additional timer/filter parameter validation is performed by these nodes.
 
-The yaw conversion, roll/pitch mapping, circular wind filter and low-speed hold
-remain unchanged. Both ROS nodes still default to 115200 baud. The 0.5-second
+Yaw uses the signed east-zero convention above. Roll/pitch mapping remains unchanged. Both ROS nodes still default to 115200 baud. The 0.5-second
 publication period and continuous last-sample publication match the old boat setup.
 
 ## Verify

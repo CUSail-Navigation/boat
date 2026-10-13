@@ -1,4 +1,4 @@
-"""Publish VectorNav GPS and roll/pitch/yaw over ROS 2."""
+"""Publish GPS and roll/pitch/heading in degrees (east=0, counter-clockwise positive)."""
 
 import rclpy
 from geometry_msgs.msg import Vector3

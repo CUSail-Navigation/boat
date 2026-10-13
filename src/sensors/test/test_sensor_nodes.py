@@ -39,7 +39,7 @@ def sensors(monkeypatch):
         Mock(
             return_value=Mock(
                 read_sample=Mock(
-                    return_value=NavigationSample(0.0, 0.0, 0.0, 0.0, 0.0)
+                    return_value=NavigationSample(90.0, 0.0, 0.0, 0.0, 0.0)
                 )
             )
         ),
@@ -126,7 +126,7 @@ def test_startup_samples_are_published_at_boat_period(sensors):
         ),
         (
             vectornav,
-            NavigationSample(0.0, 0.0, 0.0, 0.0, 0.0),
+            NavigationSample(90.0, 0.0, 0.0, 0.0, 0.0),
             vectornav.gps_callback,
             ("publisher_gps", "publisher_imu"),
         ),
@@ -142,7 +142,7 @@ def test_startup_samples_are_published_at_boat_period(sensors):
             assert getattr(node, name).publish.call_count == 2
     assert licor.publisher.publish.call_args.args[0].data == 0
     assert vectornav.publisher_gps.publish.call_args.args[0].latitude == 0.0
-    assert vectornav.publisher_imu.publish.call_args.args[0].z == 0.0
+    assert vectornav.publisher_imu.publish.call_args.args[0].z == 90.0
 
 
 def test_cleanup_closes_sensor(sensors):
