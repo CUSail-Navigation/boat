@@ -6,6 +6,7 @@ import rclpy
 from ament_index_python.packages import get_package_share_directory
 from geometry_msgs.msg import Vector3
 from interface.msg import Waypoint
+from interface.srv import Waypoint as WaypointSrv
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
@@ -25,6 +26,8 @@ OBS_DIM = 15
 # Exponential smoothing weights for the newest sample of the derived inputs.
 VELOCITY_FILTER_ALPHA = 0.5
 YAW_RATE_FILTER_ALPHA = 0.5
+# Pop the current waypoint once the boat is within this distance of it.
+WAYPOINT_REACHED_RADIUS_METERS = 5.0
 
 
 class ReinforcementLearning(Node):
@@ -69,6 +72,9 @@ class ReinforcementLearning(Node):
         self.create_subscription(
             UInt8, "reported_jib_side_flag", self.reported_jib_side_flag_callback, 10
         )
+
+        # Pops reached waypoints; the service then publishes the next current_waypoint.
+        self.waypoint_client = self.create_client(WaypointSrv, "mutate_waypoint_queue")
 
         # Derived inputs the sensors don't provide directly (filled by gps/imu callbacks).
         self.gps_time = None
@@ -214,6 +220,11 @@ class ReinforcementLearning(Node):
         waypoint_boat = world_to_boat @ waypoint_enu
         distance = max(np.linalg.norm(waypoint_boat), 1e-9)
 
+        # Waypoint reached: advance the queue and wait for the next one.
+        if distance < WAYPOINT_REACHED_RADIUS_METERS:
+            self.pop_waypoint(distance)
+            return
+
         # Boat speed: filtered GPS velocity (from gps_callback) in the boat frame.
         u, v = world_to_boat @ np.asarray(self.velocity_enu)
 
@@ -268,6 +279,31 @@ class ReinforcementLearning(Node):
         jib_side_flag = PHYSICAL.JIB_SIDE_PORT if wind_from_starboard else PHYSICAL.JIB_SIDE_STB
 
         self.publish_command(mainsail_angle, rudder_angle, jib_angle, jib_side_flag)
+
+    def pop_waypoint(self, distance):
+        """Ask the waypoint service to remove the reached waypoint from the queue."""
+        if not self.waypoint_client.service_is_ready():
+            self.get_logger().warning(
+                "Waypoint reached but mutate_waypoint_queue is unavailable; retrying.",
+                throttle_duration_sec=5.0,
+            )
+            return
+        self.get_logger().info(
+            f"Reached waypoint ({self.current_waypoint.latitude}, "
+            f"{self.current_waypoint.longitude}) at {distance:.1f} m; popping it."
+        )
+        # Cleared here rather than in the response callback: the service publishes the
+        # next waypoint before it responds, so that message can arrive first. Clearing
+        # also stops inference (and repeat pops) until the next waypoint arrives.
+        self.current_waypoint = None
+        future = self.waypoint_client.call_async(WaypointSrv.Request(command="pop"))
+        future.add_done_callback(self.pop_waypoint_done)
+
+    def pop_waypoint_done(self, future):
+        response = future.result()
+        if response is None or not response.success:
+            error = response.error if response is not None else "no response"
+            self.get_logger().warning(f"Waypoint pop failed: {error}")
 
     def publish_command(self, mainsail_angle, rudder_angle, jib_angle, jib_side_flag):
         """Publish validated integer angles in degrees and the jib-side flag."""
