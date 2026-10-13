@@ -192,8 +192,8 @@ class ReinforcementLearning(Node):
                 self.wind,
                 self.wind_speed,
                 self.current_waypoint,
-                self.actual_mainsail_angle,
-                self.actual_rudder_angle,
+                self.reported_mainsail_angle,
+                self.reported_rudder_angle,
                 self.velocity_enu,
                 self.yaw_rate,
             )
@@ -238,8 +238,8 @@ class ReinforcementLearning(Node):
 
         # Actual surface positions, on the scales the actions use.
         # Verify the rudder sign on hardware matches the sim's positive angle.
-        actual_rudder = self.actual_rudder_angle / self.cfg["max_rudder_deg"]
-        actual_sheet = 2.0 * abs(self.actual_mainsail_angle) / self.cfg["max_sail_deg"] - 1.0
+        actual_rudder = self.reported_rudder_angle / self.cfg["max_rudder_deg"]
+        actual_sheet = 2.0 * abs(self.reported_mainsail_angle) / self.cfg["max_sail_deg"] - 1.0
 
         # Same order and scaling as WaypointEnv._get_observation.
         radius = self.cfg["waypoint_max_radius_m"]
