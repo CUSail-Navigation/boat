@@ -1,3 +1,5 @@
+from glob import glob
+
 from setuptools import find_packages, setup
 
 package_name = "sailing"
@@ -12,6 +14,7 @@ setup(
             [f"resource/{package_name}"],
         ),
         (f"share/{package_name}", ["package.xml"]),
+        (f"share/{package_name}/models", glob("models/*.npz")),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
