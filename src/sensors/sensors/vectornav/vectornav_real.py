@@ -16,8 +16,8 @@ class NavigationSample:
 
 
 class SailVectorNav(SerialSensor):
-    # Match sailbot startup values (raw yaw zero converts to 90 degrees).
-    initial_sample = NavigationSample(90.0, 0.0, 0.0, 0.0, 0.0)
+    # Compass heading in degrees: north=0, east=90, increasing clockwise.
+    initial_sample = NavigationSample(0.0, 0.0, 0.0, 0.0, 0.0)
 
     @staticmethod
     def parse(line):
@@ -30,5 +30,5 @@ class SailVectorNav(SerialSensor):
         yaw, pitch, roll, latitude, longitude = map(float, fields[4:9])
         if not all(map(math.isfinite, (yaw, pitch, roll, latitude, longitude))):
             raise ValueError("Non-finite navigation sample")
-        # Preserve sailbot main's heading convention: 0=east, 90=north.
-        return NavigationSample((450.0 - yaw) % 360.0, pitch, roll, latitude, longitude)
+        # Preserve the sensor compass convention, normalizing signed yaw to [0, 360).
+        return NavigationSample(yaw % 360.0, pitch, roll, latitude, longitude)

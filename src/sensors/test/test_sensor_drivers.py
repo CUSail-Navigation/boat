@@ -9,7 +9,7 @@ from sensors.licor.licor_real import LicorAnemometer, WindSample
 from sensors.vectornav.vectornav_real import NavigationSample, SailVectorNav
 
 
-@pytest.mark.parametrize("yaw,expected", [(0, 90), (90, 0), (-90, 180), (180, 270)])
+@pytest.mark.parametrize("yaw,expected", [(0, 0), (90, 90), (-90, 270), (180, 180), (-180, 180), (270, 270), (360, 0), (450, 90)])
 def test_navigation_mapping(yaw, expected):
     sample = SailVectorNav.parse(f"$VNINS,1,2,3,{yaw},-2,7,42.8,-77.0,100*AB")
     assert sample == NavigationSample(expected, -2, 7, 42.8, -77.0)
@@ -93,11 +93,11 @@ def test_serial_framing_retained_data_disconnect_and_cleanup(monkeypatch):
     driver.close()
 
 
-def test_vectornav_startup_matches_old_raw_zero_values(monkeypatch):
+def test_vectornav_startup_is_north(monkeypatch):
     stream = Stream()
     monkeypatch.setattr(serial_sensor.serial, "Serial", lambda *a, **k: stream)
     driver = SailVectorNav("test")
     try:
-        assert driver.read_sample() == NavigationSample(90.0, 0.0, 0.0, 0.0, 0.0)
+        assert driver.read_sample() == NavigationSample(0.0, 0.0, 0.0, 0.0, 0.0)
     finally:
         driver.close()
