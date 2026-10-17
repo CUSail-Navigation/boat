@@ -53,3 +53,5 @@ EARTH_RADIUS_METERS = 6371000.0
 WAYPOINT_REACHED_RADIUS_METERS = 5.0
 # Exported policy (sailbench scripts/export_policy_numpy.py), relative to the package share dir.
 RL_POLICY_PATH = "models/best_model_3.npz"
+# Apparent wind speed the RL node assumes until the boat has a wind speed sensor.
+RL_WIND_SPEED_METERS_PER_SECOND = 2.0
