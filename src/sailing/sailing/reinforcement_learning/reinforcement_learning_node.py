@@ -10,13 +10,15 @@ from interface.srv import Waypoint as WaypointSrv
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
-from std_msgs.msg import Float32, Int32, UInt8
+from std_msgs.msg import Int32, UInt8
 
 from sailing.constants import (
     EARTH_RADIUS_METERS,
     PHYSICAL,
     RL_INFERENCE_PERIOD_SECONDS,
     RL_POLICY_PATH,
+    RL_WIND_SPEED_METERS_PER_SECOND,
+    WAYPOINT_REACHED_RADIUS_METERS,
 )
 from sailing.numpy_policy import NumpyPolicy
 
@@ -40,7 +42,8 @@ class ReinforcementLearning(Node):
         self.gps = None
         self.imu = None
         self.wind = None
-        self.wind_speed = None
+        # No wind speed sensor yet: assume a constant apparent wind speed (m/s).
+        self.wind_speed = RL_WIND_SPEED_METERS_PER_SECOND
         self.current_waypoint = None
         self.reported_mainsail_angle = None
         self.reported_rudder_angle = None
@@ -55,8 +58,7 @@ class ReinforcementLearning(Node):
 
         self.create_subscription(NavSatFix, "gps", self.gps_callback, 10)
         self.create_subscription(Vector3, "imu", self.imu_callback, 10)
-        self.create_subscription(Int32, "wind_angle", self.wind_callback, 10)
-        self.create_subscription(Float32, "wind_speed", self.wind_speed_callback, 10)
+        self.create_subscription(Int32, "wind", self.wind_callback, 10)
         self.create_subscription(
             Waypoint, "current_waypoint", self.current_waypoint_callback, 10
         )
@@ -150,10 +152,6 @@ class ReinforcementLearning(Node):
         """Cache relative wind direction in degrees."""
         self.wind = msg.data
 
-    def wind_speed_callback(self, msg):
-        """Cache relative (apparent) wind speed in metres per second."""
-        self.wind_speed = msg.data
-
     def current_waypoint_callback(self, msg):
         """Cache the current destination."""
         self.current_waypoint = msg
@@ -190,7 +188,6 @@ class ReinforcementLearning(Node):
                 self.gps,
                 self.imu,
                 self.wind,
-                self.wind_speed,
                 self.current_waypoint,
                 self.reported_mainsail_angle,
                 self.reported_rudder_angle,
