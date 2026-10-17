@@ -135,9 +135,9 @@ class ReinforcementLearning(Node):
         """Cache roll, pitch, and yaw in degrees and update the filtered yaw rate."""
         now = self._now_seconds()
         if self.imu is not None and self.imu_time is not None and now > self.imu_time:
-            # Published heading and policy yaw rate are both CCW-positive.
+            # Compass heading is CW-positive; the policy yaw rate is CCW-positive.
             heading_change_deg = (msg.z - self.imu.z + 180.0) % 360.0 - 180.0
-            yaw_rate = np.radians(heading_change_deg) / (now - self.imu_time)
+            yaw_rate = -np.radians(heading_change_deg) / (now - self.imu_time)
             if self.yaw_rate is None:
                 self.yaw_rate = yaw_rate
             else:
@@ -199,8 +199,8 @@ class ReinforcementLearning(Node):
 
         # Assemble the policy inputs in the sim's frames: world x=east, y=north;
         # boat frame x=forward, y=port; heading psi CCW from east.
-        # Published heading already uses the simulation convention.
-        psi = np.radians(self.imu.z)
+        # Convert compass heading to the simulation convention only here.
+        psi = np.radians(90.0 - self.imu.z)
         # Rotates a world (east, north) vector into the boat frame.
         world_to_boat = np.array(
             [[np.cos(psi), np.sin(psi)], [-np.sin(psi), np.cos(psi)]]

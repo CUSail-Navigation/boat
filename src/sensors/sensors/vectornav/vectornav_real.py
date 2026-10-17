@@ -1,6 +1,5 @@
 """VectorNav parsing migrated from sailbot's sailboat_sensors package."""
 
-import logging
 import math
 from dataclasses import dataclass
 
@@ -17,8 +16,8 @@ class NavigationSample:
 
 
 class SailVectorNav(SerialSensor):
-    # Heading in [-180, 180): east=0, north=90; counter-clockwise positive.
-    initial_sample = NavigationSample(90.0, 0.0, 0.0, 0.0, 0.0)
+    # Raw NED yaw in [-180, 180]: north=0, east=90; clockwise positive.
+    initial_sample = NavigationSample(0.0, 0.0, 0.0, 0.0, 0.0)
 
     @staticmethod
     def parse(line):
@@ -31,6 +30,4 @@ class SailVectorNav(SerialSensor):
         yaw, pitch, roll, latitude, longitude = map(float, fields[4:9])
         if not all(map(math.isfinite, (yaw, pitch, roll, latitude, longitude))):
             raise ValueError("Non-finite navigation sample")
-        # Convert the sensor compass bearing once, at the hardware boundary.
-        logging.getLogger(__name__).debug("Raw VectorNav compass heading: %s", yaw)
-        return NavigationSample((90.0 - yaw + 180.0) % 360.0 - 180.0, pitch, roll, latitude, longitude)
+        return NavigationSample(yaw, pitch, roll, latitude, longitude)

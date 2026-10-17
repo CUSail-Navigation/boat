@@ -12,7 +12,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
 from sensors.vectornav import vectornav_node
 from sensors.vectornav.vectornav_node import VectorNav
-from sensors.vectornav.vectornav_real import NavigationSample
+from sensors.vectornav.vectornav_real import NavigationSample, SailVectorNav
 
 
 @pytest.fixture
@@ -29,9 +29,7 @@ def sensors(monkeypatch):
         "SailVectorNav",
         Mock(
             return_value=Mock(
-                read_sample=Mock(
-                    return_value=NavigationSample(90.0, 0.0, 0.0, 0.0, 0.0)
-                )
+                read_sample=Mock(return_value=NavigationSample(0.0, 0.0, 0.0, 0.0, 0.0))
             )
         ),
     )
@@ -87,7 +85,7 @@ def test_startup_samples_are_published_at_boat_period(sensors):
     assert vectornav.timer.timer_period_ns == 500_000_000
     vectornav.timer.cancel()
     vectornav.sensor = Mock(
-        read_sample=Mock(return_value=NavigationSample(90.0, 0.0, 0.0, 0.0, 0.0))
+        read_sample=Mock(return_value=NavigationSample(0.0, 0.0, 0.0, 0.0, 0.0))
     )
     vectornav.publisher_gps = Mock()
     vectornav.publisher_imu = Mock()
@@ -96,7 +94,7 @@ def test_startup_samples_are_published_at_boat_period(sensors):
     assert vectornav.publisher_gps.publish.call_count == 2
     assert vectornav.publisher_imu.publish.call_count == 2
     assert vectornav.publisher_gps.publish.call_args.args[0].latitude == 0.0
-    assert vectornav.publisher_imu.publish.call_args.args[0].z == 90.0
+    assert vectornav.publisher_imu.publish.call_args.args[0].z == 0.0
 
 
 def test_cleanup_closes_sensor(sensors):
@@ -104,3 +102,21 @@ def test_cleanup_closes_sensor(sensors):
     vectornav.sensor.close = Mock()
     vectornav.destroy_node()
     vectornav.sensor.close.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "yaw,heading",
+    [(0, 0), (90, 90), (-90, 270), (180, 180), (-180, 180), (-0.1, 359.9), (360, 0)],
+)
+def test_published_compass_heading(sensors, yaw, heading):
+    vectornav, _, _ = sensors
+    vectornav.timer.cancel()
+    # Exercise the actual serial parser through the publisher boundary.
+    vectornav.sensor.read_sample.return_value = SailVectorNav.parse(
+        f"$VNINS,1,2,3,{yaw},-2,7,42.8,-77.0"
+    )
+    vectornav.publisher_imu = Mock()
+    vectornav.gps_callback()
+    message = vectornav.publisher_imu.publish.call_args.args[0]
+    assert (message.x, message.y) == (7, -2)
+    assert message.z == pytest.approx(heading)

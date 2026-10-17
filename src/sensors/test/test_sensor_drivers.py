@@ -10,7 +10,7 @@ from sensors.vectornav.vectornav_real import NavigationSample, SailVectorNav
 
 @pytest.mark.parametrize(
     "yaw,expected",
-    [(0, 90), (90, 0), (-90, -180), (180, -90), (-180, -90), (270, -180), (360, 90), (450, 0)],
+    [(0, 0), (90, 90), (-90, -90), (180, 180), (-180, -180)],
 )
 def test_navigation_mapping(yaw, expected):
     sample = SailVectorNav.parse(f"$VNINS,1,2,3,{yaw},-2,7,42.8,-77.0,100*AB")
@@ -65,18 +65,20 @@ def test_serial_framing_retained_data_disconnect_and_cleanup(monkeypatch):
     monkeypatch.setattr(serial_sensor.serial, "Serial", lambda *a, **k: stream)
     driver = SailVectorNav("test")
     try:
-        assert driver.read_sample() == NavigationSample(90.0, 0.0, 0.0, 0.0, 0.0)
+        assert driver.read_sample() == NavigationSample(0.0, 0.0, 0.0, 0.0, 0.0)
         stream.chunks.put(b"$VNINS,1,2,3,90,")
         stream.chunks.put(b"-2,7,42.8,-77.0\r\n$VNINS,broken\n\xff\n")
-        wait_for(lambda: driver.read_sample() == NavigationSample(0, -2, 7, 42.8, -77.0))
+        wait_for(
+            lambda: driver.read_sample() == NavigationSample(90, -2, 7, 42.8, -77.0)
+        )
         stream.chunks.put(b"x" * 5000 + b"\n$VNINS,1,2,3,180,0,0,42,-77\n")
-        wait_for(lambda: driver.read_sample() == NavigationSample(-90, 0, 0, 42, -77))
+        wait_for(lambda: driver.read_sample() == NavigationSample(180, 0, 0, 42, -77))
         # More than the former two-second timeout must not expire the sample.
         time.sleep(2.1)
-        assert driver.read_sample() == NavigationSample(-90, 0, 0, 42, -77)
+        assert driver.read_sample() == NavigationSample(180, 0, 0, 42, -77)
         stream.chunks.put(OSError("unplugged"))
         driver._thread.join(timeout=2)
-        assert driver.read_sample() == NavigationSample(-90, 0, 0, 42, -77)
+        assert driver.read_sample() == NavigationSample(180, 0, 0, 42, -77)
     finally:
         driver.close()
     assert stream.closed
@@ -89,6 +91,6 @@ def test_vectornav_startup_is_north(monkeypatch):
     monkeypatch.setattr(serial_sensor.serial, "Serial", lambda *a, **k: stream)
     driver = SailVectorNav("test")
     try:
-        assert driver.read_sample() == NavigationSample(90.0, 0.0, 0.0, 0.0, 0.0)
+        assert driver.read_sample() == NavigationSample(0.0, 0.0, 0.0, 0.0, 0.0)
     finally:
         driver.close()

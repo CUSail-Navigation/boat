@@ -1,4 +1,4 @@
-"""Publish GPS and roll/pitch/heading in degrees (east=0, counter-clockwise positive)."""
+"""Publish GPS and roll/pitch/heading in degrees (north=0, clockwise positive, [0, 360))."""
 
 import rclpy
 from geometry_msgs.msg import Vector3
@@ -39,12 +39,14 @@ class VectorNav(Node):
         gps.altitude = 0.0  # Preserve sailbot's default; altitude is not decoded.
         gps.position_covariance_type = NavSatFix.COVARIANCE_TYPE_UNKNOWN
         self.publisher_gps.publish(gps)
-        self.publisher_imu.publish(Vector3(x=sample.roll, y=sample.pitch, z=sample.yaw))
+        # VectorNav NED yaw already uses compass axes; normalize its signed range.
+        heading = sample.yaw % 360.0
+        self.publisher_imu.publish(Vector3(x=sample.roll, y=sample.pitch, z=heading))
         self.get_logger().info(
             f"Publishing GPS Data: Lat: {sample.latitude} Long: {sample.longitude}"
         )
         self.get_logger().info(
-            f"Publishing IMU Data (Yaw, Pitch, Roll) = ({sample.yaw}, {sample.pitch}, {sample.roll})"
+            f"Publishing IMU Data (Heading, Pitch, Roll) = ({heading}, {sample.pitch}, {sample.roll})"
         )
 
     def destroy_node(self):
