@@ -8,7 +8,6 @@ def generate_launch_description():
     return LaunchDescription(
         [
             Node(package="sensors", executable="vectornav_node", output="screen"),
-            Node(package="sensors", executable="licor_node", output="screen"),
             Node(package="sailing", executable="teensy_node", output="screen"),
             Node(package="mission", executable="waypoint_service", output="screen"),
             Node(

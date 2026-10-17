@@ -51,10 +51,11 @@ def spin_until(executor, predicate):
 def observe_telemetry(node, peer, executor):
     received = {}
     topics = {
-        "reported_mainsail_angle": Int32,
-        "reported_rudder_angle": Int32,
-        "reported_jib_angle": Int32,
-        "reported_jib_side_flag": UInt8,
+        "wind_angle": Int32,
+        "received_mainsail_angle": Int32,
+        "received_rudder_angle": Int32,
+        "received_jib_angle": Int32,
+        "received_jib_side_flag": UInt8,
         "dropped_packets": Int32,
     }
     subscriptions = [
@@ -117,10 +118,11 @@ def test_timer_publishes_complete_telemetry(ros_node):
 
     hardware.read_telemetry.side_effect = read
     expected = {
-        "reported_mainsail_angle": 20,
-        "reported_rudder_angle": -10,
-        "reported_jib_angle": 30,
-        "reported_jib_side_flag": 1,
+        "wind_angle": 300,
+        "received_mainsail_angle": 20,
+        "received_rudder_angle": -10,
+        "received_jib_angle": 30,
+        "received_jib_side_flag": 1,
         "dropped_packets": 7,
     }
     spin_until(executor, lambda: set(received) == set(expected))

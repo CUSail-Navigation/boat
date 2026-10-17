@@ -1,1 +1,1 @@
-"""LI-COR and VectorNav sensor interfaces."""
+"""VectorNav sensor interface."""

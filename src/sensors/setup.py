@@ -17,11 +17,10 @@ setup(
     zip_safe=True,
     maintainer="ericcai32",
     maintainer_email="ericcai32@gmail.com",
-    description="LI-COR anemometer and VectorNav INS interfaces.",
+    description="VectorNav INS interface.",
     license="Apache License 2.0",
     entry_points={
         "console_scripts": [
-            "licor_node = sensors.licor.licor_node:main",
             "vectornav_node = sensors.vectornav.vectornav_node:main",
         ]
     },

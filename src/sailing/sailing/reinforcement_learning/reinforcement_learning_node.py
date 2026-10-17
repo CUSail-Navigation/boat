@@ -45,10 +45,10 @@ class ReinforcementLearning(Node):
         # No wind speed sensor yet: assume a constant apparent wind speed (m/s).
         self.wind_speed = RL_WIND_SPEED_METERS_PER_SECOND
         self.current_waypoint = None
-        self.reported_mainsail_angle = None
-        self.reported_rudder_angle = None
-        self.reported_jib_angle = None
-        self.reported_jib_side_flag = None
+        self.received_mainsail_angle = None
+        self.received_rudder_angle = None
+        self.received_jib_angle = None
+        self.received_jib_side_flag = None
         self.last_action = [0.0, 0.0]
 
         self.mainsail_angle_pub = self.create_publisher(Int32, "mainsail_angle", 10)
@@ -63,16 +63,16 @@ class ReinforcementLearning(Node):
             Waypoint, "current_waypoint", self.current_waypoint_callback, 10
         )
         self.create_subscription(
-            Int32, "reported_mainsail_angle", self.reported_mainsail_angle_callback, 10
+            Int32, "received_mainsail_angle", self.received_mainsail_angle_callback, 10
         )
         self.create_subscription(
-            Int32, "reported_rudder_angle", self.reported_rudder_angle_callback, 10
+            Int32, "received_rudder_angle", self.received_rudder_angle_callback, 10
         )
         self.create_subscription(
-            Int32, "reported_jib_angle", self.reported_jib_angle_callback, 10
+            Int32, "received_jib_angle", self.received_jib_angle_callback, 10
         )
         self.create_subscription(
-            UInt8, "reported_jib_side_flag", self.reported_jib_side_flag_callback, 10
+            UInt8, "received_jib_side_flag", self.received_jib_side_flag_callback, 10
         )
 
         # Pops reached waypoints; the service then publishes the next current_waypoint.
@@ -156,17 +156,17 @@ class ReinforcementLearning(Node):
         """Cache the current destination."""
         self.current_waypoint = msg
 
-    def reported_mainsail_angle_callback(self, msg):
-        self.reported_mainsail_angle = msg.data
+    def received_mainsail_angle_callback(self, msg):
+        self.received_mainsail_angle = msg.data
 
-    def reported_rudder_angle_callback(self, msg):
-        self.reported_rudder_angle = msg.data
+    def received_rudder_angle_callback(self, msg):
+        self.received_rudder_angle = msg.data
 
-    def reported_jib_angle_callback(self, msg):
-        self.reported_jib_angle = msg.data
+    def received_jib_angle_callback(self, msg):
+        self.received_jib_angle = msg.data
 
-    def reported_jib_side_flag_callback(self, msg):
-        self.reported_jib_side_flag = msg.data
+    def received_jib_side_flag_callback(self, msg):
+        self.received_jib_side_flag = msg.data
 
     def run_inference(self):
         """Wait for inputs, run the policy, and publish its decoded commands.
@@ -189,8 +189,8 @@ class ReinforcementLearning(Node):
                 self.imu,
                 self.wind,
                 self.current_waypoint,
-                self.reported_mainsail_angle,
-                self.reported_rudder_angle,
+                self.received_mainsail_angle,
+                self.received_rudder_angle,
                 self.velocity_enu,
                 self.yaw_rate,
             )
@@ -235,8 +235,8 @@ class ReinforcementLearning(Node):
 
         # Actual surface positions, on the scales the actions use.
         # Verify the rudder sign on hardware matches the sim's positive angle.
-        actual_rudder = self.reported_rudder_angle / self.cfg["max_rudder_deg"]
-        actual_sheet = 2.0 * abs(self.reported_mainsail_angle) / self.cfg["max_sail_deg"] - 1.0
+        actual_rudder = self.received_rudder_angle / self.cfg["max_rudder_deg"]
+        actual_sheet = 2.0 * abs(self.received_mainsail_angle) / self.cfg["max_sail_deg"] - 1.0
 
         # Same order and scaling as WaypointEnv._get_observation.
         radius = self.cfg["waypoint_max_radius_m"]

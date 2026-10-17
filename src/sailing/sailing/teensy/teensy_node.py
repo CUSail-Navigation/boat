@@ -17,8 +17,9 @@ class Teensy(Node):
 
     Command topics (namespace-relative): ``mainsail_angle`` (Int32), ``rudder_angle``
     (Int32), ``jib_angle`` (Int32), ``jib_side_flag`` (UInt8: 0 = port side,
-    1 = starboard side). Feedback topics use the ``reported_`` prefix;
-    ``dropped_packets`` publishes the Teensy packet-drop count.
+    1 = starboard side). Feedback topics use the ``received_`` prefix;
+    ``dropped_packets`` publishes the Teensy packet-drop count. ``wind_angle``
+    (Int32) publishes the received apparent wind direction in degrees.
     """
 
     def __init__(self):
@@ -57,17 +58,18 @@ class Teensy(Node):
         self.desired_jib_side_flag = PHYSICAL.JIB_SIDE_PORT
 
         # Create telemetry publishers.
-        self.reported_mainsail_angle_pub = self.create_publisher(
-            Int32, "reported_mainsail_angle", 10
+        self.wind_angle_pub = self.create_publisher(Int32, "wind_angle", 10)
+        self.received_mainsail_angle_pub = self.create_publisher(
+            Int32, "received_mainsail_angle", 10
         )
-        self.reported_rudder_angle_pub = self.create_publisher(
-            Int32, "reported_rudder_angle", 10
+        self.received_rudder_angle_pub = self.create_publisher(
+            Int32, "received_rudder_angle", 10
         )
-        self.reported_jib_angle_pub = self.create_publisher(
-            Int32, "reported_jib_angle", 10
+        self.received_jib_angle_pub = self.create_publisher(
+            Int32, "received_jib_angle", 10
         )
-        self.reported_jib_side_flag_pub = self.create_publisher(
-            UInt8, "reported_jib_side_flag", 10
+        self.received_jib_side_flag_pub = self.create_publisher(
+            UInt8, "received_jib_side_flag", 10
         )
         self.dropped_packets_pub = self.create_publisher(Int32, "dropped_packets", 10)
 
@@ -115,21 +117,23 @@ class Teensy(Node):
             return
 
         if received:
+            self.wind_angle_pub.publish(Int32(data=data["wind_angle"]))
+
             mainsail_angle_msg = Int32()
             mainsail_angle_msg.data = data["mainsail_angle"]
-            self.reported_mainsail_angle_pub.publish(mainsail_angle_msg)
+            self.received_mainsail_angle_pub.publish(mainsail_angle_msg)
 
             rudder_angle_msg = Int32()
             rudder_angle_msg.data = data["rudder_angle"]
-            self.reported_rudder_angle_pub.publish(rudder_angle_msg)
+            self.received_rudder_angle_pub.publish(rudder_angle_msg)
 
             jib_angle_msg = Int32()
             jib_angle_msg.data = data["jib_angle"]
-            self.reported_jib_angle_pub.publish(jib_angle_msg)
+            self.received_jib_angle_pub.publish(jib_angle_msg)
 
             jib_side_flag_msg = UInt8()
             jib_side_flag_msg.data = data["jib_side_flag"]
-            self.reported_jib_side_flag_pub.publish(jib_side_flag_msg)
+            self.received_jib_side_flag_pub.publish(jib_side_flag_msg)
 
             dropped_packets_msg = Int32()
             dropped_packets_msg.data = data["dropped_packets"]
@@ -141,7 +145,8 @@ class Teensy(Node):
                 else "starboard"
             )
             self.get_logger().debug(
-                f"RX mainsail={data['mainsail_angle']} rudder={data['rudder_angle']} "
+                f"RX wind={data['wind_angle']} mainsail={data['mainsail_angle']} "
+                f"rudder={data['rudder_angle']} "
                 f"jib={data['jib_angle']} jib_side={side} "
                 f"dropped_packets={data['dropped_packets']}"
             )

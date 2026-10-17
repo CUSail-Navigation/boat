@@ -5,7 +5,6 @@ import time
 
 import pytest
 from sensors import serial_sensor
-from sensors.licor.licor_real import LicorAnemometer, WindSample
 from sensors.vectornav.vectornav_real import NavigationSample, SailVectorNav
 
 
@@ -18,20 +17,9 @@ def test_navigation_mapping(yaw, expected):
     assert sample == NavigationSample(expected, -2, 7, 42.8, -77.0)
 
 
-def test_wind_mapping():
-    assert LicorAnemometer.parse("S 00.16 D 305 U 00.13 V -00.09") == WindSample(
-        0.16, 305
-    )
-
-
 @pytest.mark.parametrize(
     "driver,line",
     [
-        (LicorAnemometer, "S"),
-        (LicorAnemometer, "D 10"),
-        (LicorAnemometer, "S nan D 10"),
-        (LicorAnemometer, "S 1 D 10.5"),
-        (LicorAnemometer, "S 2 D inf"),
         (SailVectorNav, "$VNINS,1,2,3,4"),
         (SailVectorNav, "$VNINS,1,2,3,4,5,bad,42,-77"),
         (SailVectorNav, "$VNINS,1,2,3,nan,5,6,42,-77"),
@@ -75,20 +63,20 @@ def wait_for(predicate):
 def test_serial_framing_retained_data_disconnect_and_cleanup(monkeypatch):
     stream = Stream()
     monkeypatch.setattr(serial_sensor.serial, "Serial", lambda *a, **k: stream)
-    driver = LicorAnemometer("test")
+    driver = SailVectorNav("test")
     try:
-        assert driver.read_sample() == WindSample(0.0, 0.0)
-        stream.chunks.put(b"S 2 D ")
-        stream.chunks.put(b"310\r\nS broken\n\xff\n")
-        wait_for(lambda: driver.read_sample() == WindSample(2, 310))
-        stream.chunks.put(b"x" * 5000 + b"\nS 3 D 20\n")
-        wait_for(lambda: driver.read_sample() == WindSample(3, 20))
+        assert driver.read_sample() == NavigationSample(90.0, 0.0, 0.0, 0.0, 0.0)
+        stream.chunks.put(b"$VNINS,1,2,3,90,")
+        stream.chunks.put(b"-2,7,42.8,-77.0\r\n$VNINS,broken\n\xff\n")
+        wait_for(lambda: driver.read_sample() == NavigationSample(0, -2, 7, 42.8, -77.0))
+        stream.chunks.put(b"x" * 5000 + b"\n$VNINS,1,2,3,180,0,0,42,-77\n")
+        wait_for(lambda: driver.read_sample() == NavigationSample(-90, 0, 0, 42, -77))
         # More than the former two-second timeout must not expire the sample.
         time.sleep(2.1)
-        assert driver.read_sample() == WindSample(3, 20)
+        assert driver.read_sample() == NavigationSample(-90, 0, 0, 42, -77)
         stream.chunks.put(OSError("unplugged"))
         driver._thread.join(timeout=2)
-        assert driver.read_sample() == WindSample(3, 20)
+        assert driver.read_sample() == NavigationSample(-90, 0, 0, 42, -77)
     finally:
         driver.close()
     assert stream.closed
