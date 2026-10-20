@@ -28,8 +28,6 @@ OBS_DIM = 15
 # Exponential smoothing weights for the newest sample of the derived inputs.
 VELOCITY_FILTER_ALPHA = 0.5
 YAW_RATE_FILTER_ALPHA = 0.5
-# Pop the current waypoint once the boat is within this distance of it.
-WAYPOINT_REACHED_RADIUS_METERS = 5.0
 
 
 class ReinforcementLearning(Node):

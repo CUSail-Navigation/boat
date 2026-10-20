@@ -49,6 +49,8 @@ TEENSY = _Teensy()
 
 RL_INFERENCE_PERIOD_SECONDS = 0.2
 EARTH_RADIUS_METERS = 6371000.0
+# The RL node pops the current waypoint once the boat is within this distance of it.
+WAYPOINT_REACHED_RADIUS_METERS = 5.0
 # Exported policy (sailbench scripts/export_policy_numpy.py), relative to the package share dir.
 RL_POLICY_PATH = "models/best_model_3.npz"
 # Apparent wind speed the RL node assumes until the boat has a wind speed sensor.
