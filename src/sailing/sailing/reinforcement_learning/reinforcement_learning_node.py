@@ -56,7 +56,7 @@ class ReinforcementLearning(Node):
 
         self.create_subscription(NavSatFix, "gps", self.gps_callback, 10)
         self.create_subscription(Vector3, "imu", self.imu_callback, 10)
-        self.create_subscription(Int32, "wind", self.wind_callback, 10)
+        self.create_subscription(Int32, "wind_angle", self.wind_callback, 10)
         self.create_subscription(
             Waypoint, "current_waypoint", self.current_waypoint_callback, 10
         )
