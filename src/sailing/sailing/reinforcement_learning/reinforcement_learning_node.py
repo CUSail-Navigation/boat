@@ -1,4 +1,5 @@
 """ROS interfaces for the reinforcement learning sailing algorithm."""
+
 import os
 
 import numpy as np
@@ -28,8 +29,6 @@ OBS_DIM = 15
 # Exponential smoothing weights for the newest sample of the derived inputs.
 VELOCITY_FILTER_ALPHA = 0.5
 YAW_RATE_FILTER_ALPHA = 0.5
-# Pop the current waypoint once the boat is within this distance of it.
-WAYPOINT_REACHED_RADIUS_METERS = 5.0
 
 
 class ReinforcementLearning(Node):
@@ -58,7 +57,7 @@ class ReinforcementLearning(Node):
 
         self.create_subscription(NavSatFix, "gps", self.gps_callback, 10)
         self.create_subscription(Vector3, "imu", self.imu_callback, 10)
-        self.create_subscription(Int32, "wind", self.wind_callback, 10)
+        self.create_subscription(Int32, "wind_angle", self.wind_callback, 10)
         self.create_subscription(
             Waypoint, "current_waypoint", self.current_waypoint_callback, 10
         )
@@ -103,7 +102,9 @@ class ReinforcementLearning(Node):
         self.prev_action = np.zeros(2, dtype=np.float32)
 
         self.timer = self.create_timer(RL_INFERENCE_PERIOD_SECONDS, self.run_inference)
-        self.get_logger().info(f"Reinforcement learning started with policy {policy_path}.")
+        self.get_logger().info(
+            f"Reinforcement learning started with policy {policy_path}."
+        )
 
     def _now_seconds(self):
         return self.get_clock().now().nanoseconds * 1e-9
@@ -210,7 +211,8 @@ class ReinforcementLearning(Node):
         lat0 = np.radians(self.gps.latitude)
         waypoint_enu = EARTH_RADIUS_METERS * np.array(
             [
-                np.radians(self.current_waypoint.longitude - self.gps.longitude) * np.cos(lat0),
+                np.radians(self.current_waypoint.longitude - self.gps.longitude)
+                * np.cos(lat0),
                 np.radians(self.current_waypoint.latitude - self.gps.latitude),
             ]
         )
@@ -231,12 +233,16 @@ class ReinforcementLearning(Node):
         apparent_wind = self.wind_speed * np.array([-np.cos(theta), np.sin(theta)])
         true_wind = apparent_wind + np.array([u, v])
         true_wind_speed = np.linalg.norm(true_wind)
-        wind_dir_boat = true_wind / true_wind_speed if true_wind_speed > 1e-9 else np.zeros(2)
+        wind_dir_boat = (
+            true_wind / true_wind_speed if true_wind_speed > 1e-9 else np.zeros(2)
+        )
 
         # Actual surface positions, on the scales the actions use.
         # Verify the rudder sign on hardware matches the sim's positive angle.
         actual_rudder = self.received_rudder_angle / self.cfg["max_rudder_deg"]
-        actual_sheet = 2.0 * abs(self.received_mainsail_angle) / self.cfg["max_sail_deg"] - 1.0
+        actual_sheet = (
+            2.0 * abs(self.received_mainsail_angle) / self.cfg["max_sail_deg"] - 1.0
+        )
 
         # Same order and scaling as WaypointEnv._get_observation.
         radius = self.cfg["waypoint_max_radius_m"]
@@ -260,20 +266,28 @@ class ReinforcementLearning(Node):
         # Decode the action exactly as WaypointEnv.step does.
         # Verify the rudder sign on hardware: positive here is the sim's positive angle.
         rudder_angle = int(np.rint(action[0] * self.cfg["max_rudder_deg"]))
-        mainsail_angle = int(np.rint((action[1] + 1.0) / 2.0 * self.cfg["max_sail_deg"]))
+        mainsail_angle = int(
+            np.rint((action[1] + 1.0) / 2.0 * self.cfg["max_sail_deg"])
+        )
 
         # Validate against the inclusive bounds in PHYSICAL.
         rudder_angle = int(
             np.clip(rudder_angle, PHYSICAL.RUDDER_MIN_ANGLE, PHYSICAL.RUDDER_MAX_ANGLE)
         )
         mainsail_angle = int(
-            np.clip(mainsail_angle, PHYSICAL.MAINSAIL_MIN_ANGLE, PHYSICAL.MAINSAIL_MAX_ANGLE)
+            np.clip(
+                mainsail_angle, PHYSICAL.MAINSAIL_MIN_ANGLE, PHYSICAL.MAINSAIL_MAX_ANGLE
+            )
         )
 
         # The policy was trained without a jib: trim it like the main, on the leeward side.
-        jib_angle = int(np.clip(mainsail_angle, PHYSICAL.JIB_MIN_ANGLE, PHYSICAL.JIB_MAX_ANGLE))
+        jib_angle = int(
+            np.clip(mainsail_angle, PHYSICAL.JIB_MIN_ANGLE, PHYSICAL.JIB_MAX_ANGLE)
+        )
         wind_from_starboard = np.sin(theta) > 0.0
-        jib_side_flag = PHYSICAL.JIB_SIDE_PORT if wind_from_starboard else PHYSICAL.JIB_SIDE_STB
+        jib_side_flag = (
+            PHYSICAL.JIB_SIDE_PORT if wind_from_starboard else PHYSICAL.JIB_SIDE_STB
+        )
 
         self.publish_command(mainsail_angle, rudder_angle, jib_angle, jib_side_flag)
 
