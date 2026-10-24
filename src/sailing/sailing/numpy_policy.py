@@ -65,11 +65,17 @@ class NumpyPolicy:
     def _load_npz(self, path: Path) -> None:
         with np.load(path) as data:
             n_layers = int(data["n_layers"])
-            self.weights: list[NDArray[np.float32]] = [data[f"w{i}"].astype(np.float32) for i in range(n_layers)]
-            self.biases: list[NDArray[np.float32]] = [data[f"b{i}"].astype(np.float32) for i in range(n_layers)]
+            self.weights: list[NDArray[np.float32]] = [
+                data[f"w{i}"].astype(np.float32) for i in range(n_layers)
+            ]
+            self.biases: list[NDArray[np.float32]] = [
+                data[f"b{i}"].astype(np.float32) for i in range(n_layers)
+            ]
             self.activation = _ACTIVATIONS[str(data["activation"])]
             self.env_config = {
-                key.removeprefix("cfg_"): float(data[key]) for key in data.files if key.startswith("cfg_")
+                key.removeprefix("cfg_"): float(data[key])
+                for key in data.files
+                if key.startswith("cfg_")
             }
 
     def _load_sb3_zip(self, path: Path, activation: str | None) -> None:
@@ -159,7 +165,9 @@ class _TorchStateDictUnpickler(pickle.Unpickler):
         msg = f"Unsupported global in checkpoint: {module}.{name}"
         raise pickle.UnpicklingError(msg)
 
-    def persistent_load(self, pid: tuple[str, _StorageType, str, str, int]) -> NDArray[Any]:
+    def persistent_load(
+        self, pid: tuple[str, _StorageType, str, str, int]
+    ) -> NDArray[Any]:
         # Each tensor's bytes live in <prefix>/data/<key>; pid carries the key and dtype.
         _, storage_type, key, _location, _numel = pid
         raw = self.archive.read(f"{self.prefix}/data/{key}")
@@ -172,10 +180,15 @@ def _load_torch_state_dict(blob: bytes) -> dict[str, NDArray[Any]]:
         pkl_name = next(n for n in archive.namelist() if n.endswith("data.pkl"))
         prefix = pkl_name.rsplit("/", 1)[0]
         byteorder_name = f"{prefix}/byteorder"
-        if byteorder_name in archive.namelist() and archive.read(byteorder_name) != b"little":
+        if (
+            byteorder_name in archive.namelist()
+            and archive.read(byteorder_name) != b"little"
+        ):
             msg = "Only little-endian checkpoints are supported."
             raise ValueError(msg)
-        state_dict = _TorchStateDictUnpickler(archive.read(pkl_name), archive, prefix).load()
+        state_dict = _TorchStateDictUnpickler(
+            archive.read(pkl_name), archive, prefix
+        ).load()
     return dict(state_dict)
 
 
@@ -185,12 +198,21 @@ def _load_env_config(model_path: Path) -> dict[str, float]:
     Checkpoints live at runs/<run>/best_model/*.zip or runs/<run>/checkpoints/*.zip,
     so the config is one or two directories up.
     """
-    for candidate in (model_path.parent / "config_used.yaml", model_path.parent.parent / "config_used.yaml"):
+    for candidate in (
+        model_path.parent / "config_used.yaml",
+        model_path.parent.parent / "config_used.yaml",
+    ):
         if candidate.exists():
             try:
                 import yaml  # type: ignore[import-untyped]  # noqa: PLC0415 - optional dependency
             except ImportError:
                 return {}
-            env = (yaml.safe_load(candidate.read_text(encoding="utf-8")) or {}).get("env", {})
-            return {k: float(v) for k, v in env.items() if isinstance(v, (int, float)) and not isinstance(v, bool)}
+            env = (yaml.safe_load(candidate.read_text(encoding="utf-8")) or {}).get(
+                "env", {}
+            )
+            return {
+                k: float(v)
+                for k, v in env.items()
+                if isinstance(v, (int, float)) and not isinstance(v, bool)
+            }
     return {}

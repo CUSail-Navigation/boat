@@ -77,7 +77,9 @@ class Teensy(Node):
         self.timer = self.create_timer(self.telemetry_poll_period, self.check_telemetry)
 
         # Subscribe to actuator commands.
-        self.create_subscription(Int32, "mainsail_angle", self.mainsail_angle_callback, 10)
+        self.create_subscription(
+            Int32, "mainsail_angle", self.mainsail_angle_callback, 10
+        )
         self.create_subscription(Int32, "rudder_angle", self.rudder_angle_callback, 10)
         self.create_subscription(Int32, "jib_angle", self.jib_angle_callback, 10)
         self.create_subscription(
