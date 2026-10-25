@@ -1,12 +1,10 @@
 #include "TelemetryControlTask.hpp"
 
-TelemetryControlTask::TelemetryControlTask() : last_telemetry_send_time(0), current_time(0), send_telemetry(false) {}
+TelemetryControlTask::TelemetryControlTask() : last_telemetry_send_time(0) {}
 
 /** Sends a telemetry packet of SFR data to the computer connected via @c Serial, every @c TX_PERIOD_MS . */
 void TelemetryControlTask::execute() {
-    if (current_time - last_telemetry_send_time >= constants::serial::TX_PERIOD_MS) send_telemetry = true;
-
-    if (send_telemetry) {
+    if (const uint32_t now = millis(); now - last_telemetry_send_time >= constants::serial::TX_PERIOD_MS) {
         const uint8_t data[] = {
             constants::serial::TX_START_FLAG,
             static_cast<uint8_t>(sfr::anemometer::wind_angle >> 8),
@@ -18,9 +16,7 @@ void TelemetryControlTask::execute() {
             sfr::serial::dropped_packets,
             constants::serial::TX_END_FLAG
         };
-        last_telemetry_send_time = millis();
         Serial.write(data, sizeof(data));
-        send_telemetry = false;
+        last_telemetry_send_time = now;
     }
-    current_time = millis();
 }

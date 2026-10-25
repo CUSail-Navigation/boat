@@ -8,18 +8,8 @@
 #include "ControlTasks/TelemetryControlTask.hpp"
 
 
-// Helper functions.
-/**
- * @c TelemetryControlTask compares against the timestamp captured at the END of the previous
- * @c execute(), so a freshly constructed task needs two calls before the first frame goes out.
- * This lag is harmless in the real loop (runs continuously) but must be reproduced here to observe any telemetry.
- */
-static void init_telemetry(TelemetryControlTask& task) {
-    task.execute();
-    task.execute();
-}
-
-/** The frame the firmware should produce for whatever is currently in the SFR. */
+// Helper function.
+/** Returns the frame the firmware should produce for whatever is currently in the SFR. */
 static std::vector<uint8_t> expected_frame() {
     return {
         constants::serial::TX_START_FLAG,
@@ -40,7 +30,7 @@ static void test_nothing_is_sent_before_the_period_elapses() {
     TelemetryControlTask task;
 
     mock_set_millis(constants::serial::TX_PERIOD_MS - 1);
-    init_telemetry(task);
+    task.execute();
 
     TEST_ASSERT_EQUAL_size_t_MESSAGE(0, Serial.mock_tx().size(), "Telemetry must not send before TX_PERIOD_MS has passed");
 }
@@ -56,7 +46,7 @@ static void test_frame_layout_matches_the_protocol() {
 
     TelemetryControlTask task;
     mock_set_millis(constants::serial::TX_PERIOD_MS);
-    init_telemetry(task);
+    task.execute();
 
     const std::vector<uint8_t> expected = expected_frame();
     const std::vector<uint8_t>& actual = Serial.mock_tx();
@@ -70,7 +60,7 @@ static void test_wind_angle_is_split_big_endian() {
 
     TelemetryControlTask task;
     mock_set_millis(constants::serial::TX_PERIOD_MS);
-    init_telemetry(task);
+    task.execute();
 
     const std::vector<uint8_t>& frame = Serial.mock_tx();
     TEST_ASSERT_GREATER_THAN_size_t(2, frame.size());
@@ -85,7 +75,7 @@ static void test_wind_angle_is_split_big_endian() {
 static void test_frame_is_not_repeated_until_another_period_passes() {
     TelemetryControlTask task;
     mock_set_millis(constants::serial::TX_PERIOD_MS);
-    init_telemetry(task);
+    task.execute();
 
     const size_t after_first = Serial.mock_tx().size();
     TEST_ASSERT_GREATER_THAN_size_t_MESSAGE(0, after_first, "The first frame should have been sent by now");
@@ -98,7 +88,6 @@ static void test_frame_is_not_repeated_until_another_period_passes() {
     // Once a full period has passed, the next frame goes out.
     mock_advance_millis(constants::serial::TX_PERIOD_MS);
     task.execute();
-    task.execute();
     TEST_ASSERT_GREATER_THAN_size_t_MESSAGE(after_first, Serial.mock_tx().size(),
                                             "A second frame should follow one TX_PERIOD_MS later");
 }
@@ -108,7 +97,7 @@ static void test_dropped_packet_count_is_reported() {
 
     TelemetryControlTask task;
     mock_set_millis(constants::serial::TX_PERIOD_MS);
-    init_telemetry(task);
+    task.execute();
 
     const std::vector<uint8_t>& frame = Serial.mock_tx();
     TEST_ASSERT_EQUAL_size_t(expected_frame().size(), frame.size());
