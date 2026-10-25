@@ -23,5 +23,7 @@ namespace sfr {
         uint8_t radio_buffer[constants::serial::RADIO_BUFFER_LEN] = {};
         uint8_t radio_flag = 1;
         uint8_t dropped_packets = 0;
+        uint32_t last_usb_packet_time = -constants::serial::RX_STALE_AFTER_MS;
+        uint32_t last_radio_packet_time = -constants::serial::RX_STALE_AFTER_MS;
     }
 }

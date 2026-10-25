@@ -41,12 +41,14 @@ inline void reset_sfr() {
     sfr::servo::jib_port_pwm = 0;
     sfr::servo::jib_stb_pwm = 0;
 
-    sfr::serial::update_servos_radio = false;
     sfr::serial::update_servos_usb = false;
-    sfr::serial::dropped_packets = 0;
+    sfr::serial::update_servos_radio = false;
     memset(sfr::serial::usb_buffer, 0, sizeof(sfr::serial::usb_buffer));
     memset(sfr::serial::radio_buffer, 0, sizeof(sfr::serial::radio_buffer));
     sfr::serial::radio_flag = 1;
+    sfr::serial::dropped_packets = 0;
+    sfr::serial::last_usb_packet_time = -constants::serial::RX_STALE_AFTER_MS;
+    sfr::serial::last_radio_packet_time = -constants::serial::RX_STALE_AFTER_MS;
 }
 
 /** Clear the fake clock, both serial ports, and all recorded pin/servo activity. */

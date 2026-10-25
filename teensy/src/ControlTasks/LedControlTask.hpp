@@ -4,8 +4,10 @@
 class LedControlTask {
 public:
     LedControlTask();
-    void execute() const;
+    void execute();
 
 private:
-    const uint8_t LED_PIN;
+    uint8_t num_flashes;
+    uint32_t code_length;
+    uint32_t code_start_time;
 };

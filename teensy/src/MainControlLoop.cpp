@@ -12,6 +12,7 @@ void MainControlLoop::execute() {
     anemometer_monitor.execute();
     radio_serial_monitor.execute();
     usb_serial_monitor.execute();
+    led_control_task.execute();
     servo_control_task.execute();
     telemetry_control_task.execute();
 }

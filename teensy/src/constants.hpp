@@ -76,15 +76,23 @@ namespace constants {
         constexpr uint8_t TX_END_FLAG = 0xEE;
         constexpr uint32_t TX_PERIOD_MS = 500;
 
+        constexpr uint8_t USB_BUFFER_LEN = 4;
+        constexpr uint8_t RADIO_BUFFER_LEN = 5;
         constexpr uint8_t RX_START_FLAG = 0xFF;
         constexpr uint8_t RX_END_FLAG = 0xEE;
         constexpr uint8_t RX_PACKET_TIMEOUT_MS = 50;
-        constexpr uint8_t USB_BUFFER_LEN = 4;
-        constexpr uint8_t RADIO_BUFFER_LEN = 5;
+        constexpr uint32_t RX_STALE_AFTER_MS = 2000;
 
         constexpr uint32_t BAUD_RATE = 9600;
     }
     namespace led {
         constexpr uint8_t LED_PIN = 13;
+
+        constexpr uint8_t RADIO_FLASHES = 1;
+        constexpr uint8_t USB_FLASHES = 2;
+        constexpr uint32_t FLASH_ON_MS = 150;
+        constexpr uint32_t FLASH_GAP_MS = 150;
+        constexpr uint32_t FLASH_PAUSE_MS = 1000;
+        constexpr uint32_t STALE_BLINK_MS = 500;
     }
 }
