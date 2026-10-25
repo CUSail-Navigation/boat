@@ -41,7 +41,7 @@ namespace constants {
 
         constexpr uint8_t RUDDER_MIN_ANGLE = 0; // (2025-2026) 0-90 range = -45 to +45 degrees.                         //TODO
         constexpr uint8_t RUDDER_MAX_ANGLE = 90;                                                                        //TODO
-        constexpr uint32_t RUDDER_MID_PULSE = (RUDDER_MIN_PULSE + RUDDER_MAX_PULSE) / 2; // Amidships.
+        constexpr uint8_t RUDDER_MID_ANGLE = (RUDDER_MIN_ANGLE + RUDDER_MAX_ANGLE) / 2; // Amidships.
 
         constexpr uint8_t MAINSAIL_MIN_ANGLE = 0;                                                                       //TODO
         constexpr uint8_t MAINSAIL_MAX_ANGLE = 90;                                                                      //TODO

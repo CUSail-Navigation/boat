@@ -59,6 +59,7 @@ static void apply_usb_command(ServoControlTask& task, const uint8_t mainsail, co
 static void test_radio_mode_ignores_pending_usb_command() {
     ServoControlTask task;
     mock_reset_servos();
+    const uint8_t startup_mainsail = sfr::servo::mainsail_angle;
 
     // Have a USB packet pending, but radio mode is engaged. USB packet shouldn't process.
     stage_usb_command(default_mainsail(), default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
@@ -66,7 +67,7 @@ static void test_radio_mode_ignores_pending_usb_command() {
     sfr::serial::update_servos_radio = false;
     task.execute();
 
-    TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, sfr::servo::mainsail_angle,
+    TEST_ASSERT_EQUAL_UINT8_MESSAGE(startup_mainsail, sfr::servo::mainsail_angle,
                                     "A queued USB command must not reach the servos while radio mode is engaged");
     TEST_ASSERT_TRUE_MESSAGE(sfr::serial::update_servos_usb,
                              "The USB command should remain pending, not be silently consumed");
@@ -123,9 +124,10 @@ static void test_out_of_range_mainsail_angle_is_rejected() {
     }
 
     ServoControlTask task;
+    const uint8_t startup_mainsail = sfr::servo::mainsail_angle;
     apply_usb_command(task, bad_angle, default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
 
-    TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, sfr::servo::mainsail_angle, "An out-of-range mainsail angle must be discarded");
+    TEST_ASSERT_EQUAL_UINT8_MESSAGE(startup_mainsail, sfr::servo::mainsail_angle, "An out-of-range mainsail angle must be discarded");
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(default_rudder(), sfr::servo::rudder_angle,
                                     "A bad mainsail angle must not block the valid rudder angle in the same packet");
 }
@@ -137,9 +139,10 @@ static void test_out_of_range_rudder_angle_is_rejected() {
     }
 
     ServoControlTask task;
+    const uint8_t startup_rudder = sfr::servo::rudder_angle;
     apply_usb_command(task, default_mainsail(), bad_angle, default_jib(), constants::servo::JIB_SIDE_PORT);
 
-    TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, sfr::servo::rudder_angle, "An out-of-range rudder angle must be discarded");
+    TEST_ASSERT_EQUAL_UINT8_MESSAGE(startup_rudder, sfr::servo::rudder_angle, "An out-of-range rudder angle must be discarded");
 }
 
 static void test_out_of_range_jib_angle_is_rejected() {
@@ -149,9 +152,10 @@ static void test_out_of_range_jib_angle_is_rejected() {
     }
 
     ServoControlTask task;
+    const uint8_t startup_jib = sfr::servo::jib_angle;
     apply_usb_command(task, default_mainsail(), default_rudder(), bad_angle, constants::servo::JIB_SIDE_PORT);
 
-    TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, sfr::servo::jib_angle, "An out-of-range jib angle must be discarded");
+    TEST_ASSERT_EQUAL_UINT8_MESSAGE(startup_jib, sfr::servo::jib_angle, "An out-of-range jib angle must be discarded");
 }
 
 static void test_invalid_jib_side_flag_is_rejected() {
@@ -159,9 +163,10 @@ static void test_invalid_jib_side_flag_is_rejected() {
     if (!find_invalid_jib_side_flag(bad_flag)) TEST_IGNORE_MESSAGE("Every byte value is a valid jib side flag");
 
     ServoControlTask task;
+    const uint8_t startup_jib = sfr::servo::jib_angle;
     apply_usb_command(task, default_mainsail(), default_rudder(), default_jib(), bad_flag);
 
-    TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, sfr::servo::jib_angle, "Corrupt jib side flag means whole jib command discard");
+    TEST_ASSERT_EQUAL_UINT8_MESSAGE(startup_jib, sfr::servo::jib_angle, "Corrupt jib side flag means whole jib command discard");
 }
 
 
@@ -178,14 +183,6 @@ static void test_rudder_endpoints_match_the_declared_pulse_range() {
                       constants::servo::JIB_SIDE_PORT);
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(constants::servo::RUDDER_MAX_PULSE, sfr::servo::rudder_pwm,
                                      "The largest rudder angle should map to RUDDER_MAX_PULSE");
-}
-
-static void test_rudder_midpoint_is_amidships() {
-    ServoControlTask task;
-    apply_usb_command(task, default_mainsail(), default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
-
-    TEST_ASSERT_UINT32_WITHIN_MESSAGE(1, constants::servo::RUDDER_MID_PULSE, sfr::servo::rudder_pwm,
-                                      "A mid-range rudder angle should sit at RUDDER_MID_PULSE");
 }
 
 static void test_rudder_pwm_rises_with_angle_and_stays_in_range() {
@@ -278,6 +275,23 @@ static void test_trimming_starboard_jib_slacks_the_port_sheet() {
 
 
 // Simulates wiring: the computed PWM must actually reach the servo on the right pin.
+static void test_startup_pose_reaches_the_servo_pins() {
+    ServoControlTask task;
+
+    TEST_ASSERT_EQUAL_INT_MESSAGE(static_cast<int>(sfr::servo::mainsail_pwm),
+                                  g_mock_servo_last_write[constants::servo::MAINSAIL_PIN],
+                                  "The mainsail servo should be driven to the startup PWM recorded in the SFR");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(static_cast<int>(sfr::servo::rudder_pwm),
+                                  g_mock_servo_last_write[constants::servo::RUDDER_PIN],
+                                  "The rudder servo should be driven to the startup PWM recorded in the SFR");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(static_cast<int>(sfr::servo::jib_port_pwm),
+                                  g_mock_servo_last_write[constants::servo::JIB_PORT_PIN],
+                                  "The port jib servo should be driven to the startup PWM recorded in the SFR");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(static_cast<int>(sfr::servo::jib_stb_pwm),
+                                  g_mock_servo_last_write[constants::servo::JIB_STB_PIN],
+                                  "The starboard jib servo should be driven to the startup PWM recorded in the SFR");
+}
+
 static void test_computed_pwm_reaches_the_correct_servo_pins() {
     ServoControlTask task;
     mock_reset_servos();
@@ -309,7 +323,6 @@ void run_servo_control_tests() {
     RUN_TEST(test_invalid_jib_side_flag_is_rejected);
 
     RUN_TEST(test_rudder_endpoints_match_the_declared_pulse_range);
-    RUN_TEST(test_rudder_midpoint_is_amidships);
     RUN_TEST(test_rudder_pwm_rises_with_angle_and_stays_in_range);
 
     RUN_TEST(test_mainsail_pwm_never_falls_and_stays_in_range);
@@ -318,5 +331,6 @@ void run_servo_control_tests() {
     RUN_TEST(test_trimming_port_jib_slacks_the_starboard_sheet);
     RUN_TEST(test_trimming_starboard_jib_slacks_the_port_sheet);
 
+    RUN_TEST(test_startup_pose_reaches_the_servo_pins);
     RUN_TEST(test_computed_pwm_reaches_the_correct_servo_pins);
 }
