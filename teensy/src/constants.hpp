@@ -62,7 +62,7 @@ namespace constants {
         constexpr uint8_t JIB_SIDE_PORT = 0;
         constexpr uint8_t JIB_SIDE_STB = 1;
     }
-    /** SERIAL NOTES FROM 2025-2026 SEASON: <p>
+    /** SERIAL NOTES FROM 2025-2026 SEASON:
      * - USB BUFFER FORMAT (which is RX PACKET FORMAT between the start and end flags):
      *   - [0] = \code mainsail_angle\endcode
      *   - [1] = \code rudder_angle\endcode

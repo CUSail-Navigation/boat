@@ -15,7 +15,8 @@ ServoControlTask::ServoControlTask() {
 }
 
 /**
- *  Update the servos if valid serial data is ready and waiting. <p>
+ *  Update the servos if valid serial data is ready and waiting.
+ *
  *  Note that radio mode ( \code radio_flag != 0\endcode ) takes priority over USB mode. Flags differ between serial
  *  modes, but the resultant servo behavior should be identical.
  *

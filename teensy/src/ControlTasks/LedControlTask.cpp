@@ -35,7 +35,7 @@ void LedControlTask::execute() {
         code_start_time = now;
     }
 
-    // Figure out where in the current code we are and update the LED to match.
+    // Figure out where in the current status code we are, update the LED to match.
     bool on;
     const uint32_t elapsed = now - code_start_time;
     if (num_flashes == 0) {
