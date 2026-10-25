@@ -4,9 +4,9 @@
 /**
  * This method is the entry point for the Teensy unit tests.
  *
- * The test framework \code Unity\endcode requires exactly one \code main()\endcode, one \code setup()\endcode, and one
-*  \code tearDown()\endcode per binary, so they are centrally organized here. The function \code setup()\endcode runs
-*  before every test in every topic (wipes the SFR and mocks so no test can inherit state from whatever ran before it).
+ * The test framework @c Unity requires exactly one @c main(), one @c setup(), and one @c tearDown() per binary,
+ * so they are centrally organized here. The function @c setup() runs before every test in every topic
+ * (wipes the SFR and mocks so no test can inherit state from whatever ran before it).
  */
 int main(int, char**) {
     UNITY_BEGIN();

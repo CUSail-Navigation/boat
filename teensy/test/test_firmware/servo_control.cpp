@@ -26,7 +26,7 @@ static uint8_t default_jib() {
     return mid_angle(constants::servo::JIB_MIN_ANGLE, constants::servo::JIB_MAX_ANGLE);
 }
 
-/** Stage a USB command in the SFR exactly as \code USBSerialMonitor\endcode would, and select USB mode. */
+/** Stage a USB command in the SFR exactly as @c USBSerialMonitor would, and select USB mode. */
 static void stage_usb_command(const uint8_t mainsail, const uint8_t rudder, const uint8_t jib, const uint8_t jib_side) {
     sfr::serial::usb_buffer[layout::USB_MAINSAIL] = mainsail;
     sfr::serial::usb_buffer[layout::USB_RUDDER] = rudder;
@@ -36,7 +36,7 @@ static void stage_usb_command(const uint8_t mainsail, const uint8_t rudder, cons
     sfr::serial::radio_flag = 0;
 }
 
-/** Stage a radio command in the SFR exactly as \code RadioSerialMonitor\endcode would, and select radio mode. */
+/** Stage a radio command in the SFR exactly as @c RadioSerialMonitor would, and select radio mode. */
 static void stage_radio_command(const uint8_t mainsail, const uint8_t rudder, const uint8_t jib, const uint8_t jib_side) {
     sfr::serial::radio_buffer[layout::RADIO_FLAG] = 1;
     sfr::serial::radio_buffer[layout::RADIO_MAINSAIL] = mainsail;

@@ -10,8 +10,8 @@
 
 // Helper functions.
 /**
- * \code TelemetryControlTask\endcode compares against the timestamp captured at the END of the previous
- * \code execute()\endcode, so a freshly constructed task needs two calls before the first frame goes out.
+ * @c TelemetryControlTask compares against the timestamp captured at the END of the previous
+ * @c execute(), so a freshly constructed task needs two calls before the first frame goes out.
  * This lag is harmless in the real loop (runs continuously) but must be reproduced here to observe any telemetry.
  */
 static void init_telemetry(TelemetryControlTask& task) {
