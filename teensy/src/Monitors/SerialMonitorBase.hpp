@@ -19,13 +19,14 @@ protected:
     [[nodiscard]] bool packet_timed_out() const;
 
     /**
-    * Reads and assembles incoming serial packets from \code port\endcode into \code sfr_buffer\endcode, byte by byte.
-    * Returns \code true\endcode if at least one full packet is assembled during this call; the last of such packets is
-    * reflected in \code sfr_buffer\endcode.
+    * Reads and assembles incoming serial packets from @c port into @c sfr_buffer, byte by byte.
     *
-    * Valid packets must begin with \code RX_START_FLAG\endcode, end with \code RX_END_FLAG\endcode, and contain exactly
-    * \code len\endcode bytes. Malformed packets that do not follow this structure, or packets that stall for longer
-    * than \code RX_PACKET_TIMEOUT_MS\endcode, are dropped.
+    * Valid packets must begin with @c RX_START_FLAG, end with @c RX_END_FLAG, and contain exactly
+    * @c len bytes. Malformed packets that do not follow this structure, or packets that stall for
+    * longer than @c RX_PACKET_TIMEOUT_MS, are dropped.
+    *
+    * @return @c true if at least one full packet is assembled during this call; the last of such
+    *         packets is reflected in @c sfr_buffer
     */
     template <typename Port> bool read_packet(Port& port, uint8_t* temp_buffer, uint8_t* sfr_buffer, const uint8_t len) {
         if (packet_timed_out()) drop_packet();

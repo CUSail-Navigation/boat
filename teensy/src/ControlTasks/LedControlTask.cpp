@@ -5,8 +5,8 @@ LedControlTask::LedControlTask() : num_flashes(0), code_length(0), code_start_ti
 }
 
 /**
- * Blinks a certain status LED code to indicate which serial input is in control, if that input is not stale (we
- * say that the input is stale if we haven't received a packet from it in the last \code RX_STALE_AFTER_MS\endcode).
+ * Blinks a certain status LED code to indicate which serial input is in control, if that input is not stale
+ * (we say that the input is stale if we haven't received a packet from it in the last @c RX_STALE_AFTER_MS).
  *
  * The different types of status LED codes are:
  * - Radio in control (and not stale): 1 flash, then a pause.

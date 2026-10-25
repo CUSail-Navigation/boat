@@ -9,14 +9,14 @@ namespace constants {
      * - All servos can go from 600 PWM (a "SMALL" angle) to 2400 PWM (a "LARGE" angle).
      * - In general, we choose ~800 as a baseline PWM to represent a minimum angle so that, just in case something
      *   physical changes on the boat, we can recalibrate the PWM that corresponds to this angle by dipping below this
-     *   baseline (until reaching \code SERVO_MIN_PULSE\endcode), and avoiding needing to re-screw the servos.
-     * - Rudder: This servo can turn 0.5 times, but mech did something to cut this in half, so that the rudder will only
-     *              go from -45 degrees (600 PWM) to 45 degrees (2400 PWM).
+     *   baseline (until reaching @c SERVO_MIN_PULSE), and avoiding needing to re-screw the servos.
+     * - Rudder: This servo can turn 0.5 times, but mech did something to cut this in half, so that the rudder will
+     *           only go from -45 degrees (600 PWM) to 45 degrees (2400 PWM).
      * - Mainsail: This servo can turn 7.85 times.
      * - Jib: We have two servos, one for each side of the boat. Both servos can turn 7.85 times.
      *
-     * NOTE: Any constants that are labeled \code TODO\endcode are ones that we plan to make runtime-changeable over
-     *       the mobile app. This functionality is not yet implemented.
+     * NOTE: Any constants that are labeled @c TODO are ones that we plan to make runtime-changeable over the mobile
+     *       app. This functionality is not yet implemented.
      */
     namespace servo {
         constexpr uint8_t RUDDER_PIN   = 4;
@@ -64,10 +64,10 @@ namespace constants {
     }
     /** SERIAL NOTES FROM 2025-2026 SEASON:
      * - USB BUFFER FORMAT (which is RX PACKET FORMAT between the start and end flags):
-     *   - [0] = \code mainsail_angle\endcode
-     *   - [1] = \code rudder_angle\endcode
-     *   - [2] = \code jib_angle\endcode
-     *   - [3] = \code jib_side_flag\endcode ( \code JIB_SIDE_PORT\endcode or \code JIB_SIDE_STB\endcode )
+     *   - [0] = @c mainsail_angle
+     *   - [1] = @c rudder_angle
+     *   - [2] = @c jib_angle
+     *   - [3] = @c jib_side_flag ( @c JIB_SIDE_PORT or @c JIB_SIDE_STB )
      * - TX PACKET FORMAT: [start_flag, wind_hi, wind_lo, mainsail_angle, rudder_angle,
      *                      jib_angle, jib_side_flag, dropped_packets, end_flag].
      */
