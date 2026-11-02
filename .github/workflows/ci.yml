@@ -1,4 +1,4 @@
-name: ROS CI
+name: Boat CI
 
 on:
   push:
@@ -49,3 +49,28 @@ jobs:
               colcon test-result --verbose
               exit "$test_status"
             '
+
+  teensy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: teensy
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ runner.os }}-${{ hashFiles('teensy/platformio.ini') }}
+      - name: Install PlatformIO
+        run: pip install --upgrade platformio
+      - name: Build firmware
+        run: pio run -e teensy40
+      - name: Run unit tests
+        run: ./test/run_tests.sh
