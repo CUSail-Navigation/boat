@@ -37,7 +37,7 @@ prevents "magic numbers" in the codebase.
 A directory intended for PlatformIO Test Runner and project tests. The tests currently included here run locally, with 
 no need to have a Teensy plugged in. Run them from the `test/` directory with the command `./run_tests.sh`.
 
-See [test/README.md](test/README.md) for how more on how this test suite works and what is covered.
+See [test/README.md](test/README.md) for more information on how this test suite works and what it covers.
 
 ---
 
