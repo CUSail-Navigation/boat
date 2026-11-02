@@ -276,7 +276,7 @@ static void test_trimming_starboard_jib_slacks_the_port_sheet() {
 
 // Simulates wiring: the computed PWM must actually reach the servo on the right pin.
 static void test_startup_pose_reaches_the_servo_pins() {
-    ServoControlTask task;
+    ServoControlTask task; // ServoControlTask constructor runs.
 
     TEST_ASSERT_EQUAL_INT_MESSAGE(static_cast<int>(sfr::servo::mainsail_pwm),
                                   g_mock_servo_last_write[constants::servo::MAINSAIL_PIN],
@@ -294,18 +294,24 @@ static void test_startup_pose_reaches_the_servo_pins() {
 
 static void test_computed_pwm_reaches_the_correct_servo_pins() {
     ServoControlTask task;
-    mock_reset_servos();
-    apply_usb_command(task, default_mainsail(), default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
 
-    TEST_ASSERT_EQUAL_INT_MESSAGE(static_cast<int>(sfr::servo::rudder_pwm),
-                                  g_mock_servo_last_write[constants::servo::RUDDER_PIN],
-                                  "The rudder servo should receive the PWM recorded in the SFR");
-    TEST_ASSERT_EQUAL_INT_MESSAGE(static_cast<int>(sfr::servo::mainsail_pwm),
-                                  g_mock_servo_last_write[constants::servo::MAINSAIL_PIN],
-                                  "The mainsail servo should receive the PWM recorded in the SFR");
-    TEST_ASSERT_EQUAL_INT_MESSAGE(static_cast<int>(sfr::servo::jib_port_pwm),
-                                  g_mock_servo_last_write[constants::servo::JIB_PORT_PIN],
-                                  "The port jib servo should receive the PWM recorded in the SFR");
+    for (const uint8_t side : {constants::servo::JIB_SIDE_PORT, constants::servo::JIB_SIDE_STB}) {
+        mock_reset_servos();
+        apply_usb_command(task, default_mainsail(), default_rudder(), default_jib(), side);
+
+        TEST_ASSERT_EQUAL_INT_MESSAGE(static_cast<int>(sfr::servo::rudder_pwm),
+                                      g_mock_servo_last_write[constants::servo::RUDDER_PIN],
+                                      "The rudder servo should receive the PWM recorded in the SFR");
+        TEST_ASSERT_EQUAL_INT_MESSAGE(static_cast<int>(sfr::servo::mainsail_pwm),
+                                      g_mock_servo_last_write[constants::servo::MAINSAIL_PIN],
+                                      "The mainsail servo should receive the PWM recorded in the SFR");
+        TEST_ASSERT_EQUAL_INT_MESSAGE(static_cast<int>(sfr::servo::jib_port_pwm),
+                                      g_mock_servo_last_write[constants::servo::JIB_PORT_PIN],
+                                      "The port jib servo should receive the PWM recorded in the SFR");
+        TEST_ASSERT_EQUAL_INT_MESSAGE(static_cast<int>(sfr::servo::jib_stb_pwm),
+                                      g_mock_servo_last_write[constants::servo::JIB_STB_PIN],
+                                      "The starboard jib servo should receive the PWM recorded in the SFR");
+    }
 }
 
 

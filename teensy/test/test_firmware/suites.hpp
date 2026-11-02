@@ -11,3 +11,4 @@ void run_serial_framing_tests();
 void run_servo_control_tests();
 void run_telemetry_tests();
 void run_anemometer_tests();
+void run_led_tests();

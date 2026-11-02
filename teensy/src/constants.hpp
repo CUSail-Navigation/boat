@@ -93,6 +93,6 @@ namespace constants {
         constexpr uint32_t FLASH_ON_MS = 150;
         constexpr uint32_t FLASH_GAP_MS = 150;
         constexpr uint32_t FLASH_PAUSE_MS = 1000;
-        constexpr uint32_t STALE_BLINK_MS = 500;
+        constexpr uint32_t STALE_BLINK_MS = 1000;
     }
 }
