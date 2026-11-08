@@ -32,14 +32,14 @@ def test_open_failure_is_visible(transport):
 
 def test_empty_read_leaves_data_unchanged(driver):
     data = {"previous": 123}
-    assert driver.read_telemetry(data) == 1
+    assert not driver.read_telemetry(data)
     assert data == {"previous": 123}
 
 
 def test_decode_telemetry(driver, transport):
     transport.incoming.extend(frame())
     data = {}
-    assert driver.read_telemetry(data) == 0
+    assert driver.read_telemetry(data)
     assert data == dict(
         wind_angle=300,
         mainsail_angle=20,
@@ -55,10 +55,10 @@ def test_fragmented_frame(driver, transport, split):
     packet = frame()
     transport.incoming.extend(packet[:split])
     data = {"previous": 123}
-    assert driver.read_telemetry(data) == 1
+    assert not driver.read_telemetry(data)
     assert data == {"previous": 123}
     transport.incoming.extend(packet[split:])
-    assert driver.read_telemetry(data) == 0
+    assert driver.read_telemetry(data)
     assert data["wind_angle"] == 300
 
 
@@ -69,7 +69,7 @@ def test_resynchronize_after_noise_or_bad_frame(driver, transport, garbage):
     transport.incoming.extend(garbage + frame())
     data = {}
     for _ in range(3):
-        if driver.read_telemetry(data) == 0:
+        if driver.read_telemetry(data):
             break
     assert data.get("wind_angle") == 300
 
@@ -77,13 +77,13 @@ def test_resynchronize_after_noise_or_bad_frame(driver, transport, garbage):
 def test_newest_queued_packet_wins(driver, transport):
     transport.incoming.extend(frame(wind=100) + frame(wind=200))
     data = {}
-    assert driver.read_telemetry(data) == 0
+    assert driver.read_telemetry(data)
     assert data["wind_angle"] == 200
 
 
 def test_short_packet_is_not_merged_with_following_bytes(driver, transport):
     transport.incoming.extend(bytes([0xFF, 1, 44, 20, 0xEE, 45, 30, 1, 7, 0xEE]))
-    assert driver.read_telemetry({}) == 1
+    assert not driver.read_telemetry({})
 
 
 @pytest.mark.parametrize("position", ["minimum", "neutral", "maximum"])

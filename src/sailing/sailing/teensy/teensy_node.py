@@ -101,7 +101,7 @@ class Teensy(Node):
         """Read and publish telemetry from the Teensy."""
         data = {}
         try:
-            received = self.serial_port.read_telemetry(data) == 0
+            received = self.serial_port.read_telemetry(data)
         except OSError as exc:
             self.get_logger().warning(
                 f"Telemetry read failed: reason={exc}",

@@ -23,7 +23,7 @@ def ros():
 @pytest.fixture
 def ros_node(ros, monkeypatch):
     hardware = Mock(
-        send_command=Mock(), read_telemetry=Mock(return_value=1)
+        send_command=Mock(), read_telemetry=Mock(return_value=False)
     )
     monkeypatch.setattr(
         teensy_node.serial_port, "SerialPort", Mock(return_value=hardware)
@@ -113,7 +113,7 @@ def test_timer_publishes_complete_telemetry(ros_node):
 
     def read(data):
         data.update(sample)
-        return 0
+        return True
 
     hardware.read_telemetry.side_effect = read
     expected = {
