@@ -1,7 +1,8 @@
 import serial
 from sailing.constants import PHYSICAL, SERIAL
 
-class SerialPort:
+
+class TeensySerialDriver:
     """A helper class that handles serial commands and telemetry for the Teensy."""
 
     def __init__(self, port):
@@ -23,15 +24,15 @@ class SerialPort:
         :raises serial.SerialException: if writing to the port fails.
         """
         # Command payload format between start/end flags: [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
-        command_packet = bytes([
+        command_packet = [
             SERIAL.RX_START_FLAG,
             mainsail_angle,
             rudder_angle - PHYSICAL.RUDDER_MIN_ANGLE,  # Offset for the Teensy's 0-90 range.
             jib_angle,
             jib_side_flag,
             SERIAL.RX_END_FLAG,
-        ])
-        self.serial.write(command_packet)
+        ]
+        self.serial.write(bytes(command_packet))
 
     def read_telemetry(self, data):
         """

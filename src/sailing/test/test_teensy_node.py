@@ -9,6 +9,7 @@ import pytest
 import rclpy
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
+from sailing.constants import PHYSICAL, TEENSY
 from sailing.teensy import teensy_node
 from std_msgs.msg import Int32, UInt8
 
@@ -22,12 +23,8 @@ def ros():
 
 @pytest.fixture
 def ros_node(ros, monkeypatch):
-    hardware = Mock(
-        send_command=Mock(), read_telemetry=Mock(return_value=False)
-    )
-    monkeypatch.setattr(
-        teensy_node.serial_port, "SerialPort", Mock(return_value=hardware)
-    )
+    hardware = Mock(send_command=Mock(), read_telemetry=Mock(return_value=False))
+    monkeypatch.setattr(teensy_node.teensy_serial_driver, "TeensySerialDriver", Mock(return_value=hardware))
     node = teensy_node.Teensy()
     peer = Node("test_peer")
     executor = SingleThreadedExecutor()
@@ -69,8 +66,7 @@ def observe_telemetry(node, peer, executor):
     spin_until(
         executor,
         lambda: all(
-            peer.count_publishers(subscription.topic_name) == 1
-            and node.count_subscribers(subscription.topic_name) == 1
+            peer.count_publishers(subscription.topic_name) == 1 and node.count_subscribers(subscription.topic_name) == 1
             for subscription in subscriptions
         ),
     )
@@ -91,10 +87,12 @@ def test_command_topics_send_full_latest_command(ros_node):
         spin_until(executor, lambda: publisher.get_subscription_count() == 1)
         publisher.publish(message_type(data=value))
         spin_until(executor, lambda: hardware.send_command.call_count >= count)
+    # Each command resends every field; fields not yet commanded keep the node's initial values.
+    rudder, jib, side = TEENSY.INITIAL_RUDDER_ANGLE, TEENSY.INITIAL_JIB_ANGLE, PHYSICAL.JIB_SIDE_PORT
     assert hardware.send_command.call_args_list == [
-        call(20, 0, 0, 0),
-        call(20, -10, 0, 0),
-        call(20, -10, 30, 0),
+        call(20, rudder, jib, side),
+        call(20, -10, jib, side),
+        call(20, -10, 30, side),
         call(20, -10, 30, 1),
     ]
 
@@ -166,7 +164,7 @@ def test_invalid_poll_period_does_not_open_port(ros, monkeypatch, period):
         replace(teensy_node.TEENSY, DEFAULT_TELEMETRY_POLL_PERIOD_SECONDS=period),
     )
     factory = Mock()
-    monkeypatch.setattr(teensy_node.serial_port, "SerialPort", factory)
+    monkeypatch.setattr(teensy_node.teensy_serial_driver, "TeensySerialDriver", factory)
     node = teensy_node.Teensy.__new__(teensy_node.Teensy)
     try:
         with pytest.raises(ValueError):
@@ -178,7 +176,7 @@ def test_invalid_poll_period_does_not_open_port(ros, monkeypatch, period):
 
 def test_serial_open_failure_propagates(ros, monkeypatch):
     monkeypatch.setattr(
-        teensy_node.serial_port, "SerialPort", Mock(side_effect=OSError("missing port"))
+        teensy_node.teensy_serial_driver, "TeensySerialDriver", Mock(side_effect=OSError("missing port"))
     )
     node = teensy_node.Teensy.__new__(teensy_node.Teensy)
     try:

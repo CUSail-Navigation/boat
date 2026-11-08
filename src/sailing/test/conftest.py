@@ -1,9 +1,8 @@
 """Fake serial connection shared by driver tests."""
 
-from unittest.mock import Mock
-
 import pytest
-from sailing.teensy import serial_port
+from unittest.mock import Mock
+from sailing.teensy import teensy_serial_driver
 
 
 class FakeSerial:
@@ -38,12 +37,12 @@ class FakeSerial:
 @pytest.fixture
 def transport(monkeypatch):
     transport = FakeSerial()
-    monkeypatch.setattr(serial_port.serial, "Serial", Mock(return_value=transport))
+    monkeypatch.setattr(teensy_serial_driver.serial, "Serial", Mock(return_value=transport))
     return transport
 
 
 @pytest.fixture
 def driver(transport):
-    driver = serial_port.SerialPort("/dev/test-teensy")
+    driver = teensy_serial_driver.TeensySerialDriver("/dev/test-teensy")
     yield driver
     driver.close()

@@ -8,26 +8,24 @@ These tests preserve the migration's behavior; they do not verify hardware calib
 
 import pytest
 from sailing.constants import PHYSICAL
-from sailing.teensy import serial_port
+from sailing.teensy import teensy_serial_driver
 
 
 def frame(wind=300, mainsail=20, rudder=45, jib=30, side=1, dropped=7):
-    return bytes(
-        [0xFF, wind >> 8, wind & 0xFF, mainsail, rudder, jib, side, dropped, 0xEE]
-    )
+    return bytes([0xFF, wind >> 8, wind & 0xFF, mainsail, rudder, jib, side, dropped, 0xEE])
 
 
 def test_open_uses_configured_port_and_baudrate(transport):
-    serial_port.SerialPort("/dev/test-teensy")
-    args, kwargs = serial_port.serial.Serial.call_args
+    teensy_serial_driver.TeensySerialDriver("/dev/test-teensy")
+    args, kwargs = teensy_serial_driver.serial.Serial.call_args
     assert (args[0] if args else kwargs["port"]) == "/dev/test-teensy"
     assert kwargs["baudrate"] == 9600
 
 
 def test_open_failure_is_visible(transport):
-    serial_port.serial.Serial.side_effect = OSError("disconnected")
+    teensy_serial_driver.serial.Serial.side_effect = OSError("disconnected")
     with pytest.raises(OSError, match="disconnected"):
-        serial_port.SerialPort("/dev/test-teensy")
+        teensy_serial_driver.TeensySerialDriver("/dev/test-teensy")
 
 
 def test_empty_read_leaves_data_unchanged(driver):
@@ -62,9 +60,7 @@ def test_fragmented_frame(driver, transport, split):
     assert data["wind_angle"] == 300
 
 
-@pytest.mark.parametrize(
-    "garbage", [b"noise", frame()[:-1] + b"\x00", b"\xff" + b"\x01" * 64]
-)
+@pytest.mark.parametrize("garbage", [b"noise", frame()[:-1] + b"\x00", b"\xff" + b"\x01" * 64])
 def test_resynchronize_after_noise_or_bad_frame(driver, transport, garbage):
     transport.incoming.extend(garbage + frame())
     data = {}

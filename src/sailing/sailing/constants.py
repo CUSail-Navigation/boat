@@ -3,7 +3,9 @@ BOAT CONSTANTS: physical limits, serial protocol constants, Teensy node defaults
 Use these to avoid "magic numbers" in code, and to keep everything specific to a
 given boat centrally located.
 """
+
 from dataclasses import dataclass
+
 
 @dataclass(frozen=True)
 class _Physical:
@@ -11,6 +13,7 @@ class _Physical:
     Physical parameters of the boat. Note that all angles are measured in degrees.
     These constants concern the 2025-2026 season boat (update this every year).
     """
+
     RUDDER_MIN_ANGLE: int = -45
     RUDDER_MAX_ANGLE: int = 45
 
@@ -22,9 +25,11 @@ class _Physical:
     JIB_SIDE_PORT: int = 0
     JIB_SIDE_STB: int = 1
 
+
 @dataclass(frozen=True)
 class _Serial:
     """Serial protocol parameters; TX and RX are from the Teensy's perspective."""
+
     TX_START_FLAG: int = 0xFF
     TX_END_FLAG: int = 0xEE
     TX_PERIOD_MS: int = 500
@@ -36,15 +41,19 @@ class _Serial:
 
     BAUD_RATE: int = 9600
 
+
 @dataclass(frozen=True)
 class _Teensy:
     """Default settings and initial actuator positions for the Teensy node."""
+
     DEFAULT_PORT: str = "/dev/ttyACM0"
     DEFAULT_TELEMETRY_POLL_PERIOD_SECONDS: float = 0.5
-    INITIAL_MAINSAIL_ANGLE: int = 0
-    INITIAL_RUDDER_ANGLE: int = 0
-    INITIAL_JIB_ANGLE: int = 0
     WARNING_THROTTLE_SECONDS: float = 5.0
+
+    INITIAL_MAINSAIL_ANGLE: int = 90
+    INITIAL_RUDDER_ANGLE: int = 0
+    INITIAL_JIB_ANGLE: int = 90
+
 
 PHYSICAL = _Physical()
 SERIAL = _Serial()

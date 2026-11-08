@@ -2,10 +2,8 @@ import rclpy
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from std_msgs.msg import Int32, UInt8
-
 from sailing.constants import PHYSICAL, TEENSY
-
-from . import serial_port
+from . import teensy_serial_driver
 
 
 class Teensy(Node):
@@ -25,9 +23,7 @@ class Teensy(Node):
 
         # Declare parameters.
         self.declare_parameter("teensy_port", TEENSY.DEFAULT_PORT)
-        self.declare_parameter(
-            "rx_period", TEENSY.DEFAULT_TELEMETRY_POLL_PERIOD_SECONDS
-        )
+        self.declare_parameter("rx_period", TEENSY.DEFAULT_TELEMETRY_POLL_PERIOD_SECONDS)
 
         # Read parameters.
         self.telemetry_poll_period = float(self.get_parameter("rx_period").value)
@@ -38,15 +34,12 @@ class Teensy(Node):
 
         # Initialize the hardware driver.
         try:
-            self.serial_port = serial_port.SerialPort(self.teensy_port)
+            self.serial_driver = teensy_serial_driver.TeensySerialDriver(self.teensy_port)
         except Exception as exc:
-            self.get_logger().error(
-                f"Serial connection failed: port={self.teensy_port} reason={exc}"
-            )
+            self.get_logger().error(f"Serial connection failed: port={self.teensy_port} reason={exc}")
             raise
         self.get_logger().info(
-            f"Serial connection opened: port={self.teensy_port} "
-            f"poll_period={self.telemetry_poll_period}s"
+            f"Serial connection opened: port={self.teensy_port} poll_period={self.telemetry_poll_period}s"
         )
 
         # Initialize desired actuator positions.
@@ -57,13 +50,9 @@ class Teensy(Node):
 
         # Create telemetry publishers.
         self.actual_mainsail_angle_pub = self.create_publisher(Int32, "actual_mainsail_angle", 10)
-        self.actual_rudder_angle_pub = self.create_publisher(
-            Int32, "actual_rudder_angle", 10
-        )
+        self.actual_rudder_angle_pub = self.create_publisher(Int32, "actual_rudder_angle", 10)
         self.actual_jib_angle_pub = self.create_publisher(Int32, "actual_jib_angle", 10)
-        self.actual_jib_side_flag_pub = self.create_publisher(
-            UInt8, "actual_jib_side_flag", 10
-        )
+        self.actual_jib_side_flag_pub = self.create_publisher(UInt8, "actual_jib_side_flag", 10)
         self.dropped_packets_pub = self.create_publisher(Int32, "dropped_packets", 10)
 
         # Poll telemetry periodically.
@@ -73,9 +62,7 @@ class Teensy(Node):
         self.create_subscription(Int32, "mainsail_angle", self.mainsail_angle_callback, 10)
         self.create_subscription(Int32, "rudder_angle", self.rudder_angle_callback, 10)
         self.create_subscription(Int32, "jib_angle", self.jib_angle_callback, 10)
-        self.create_subscription(
-            UInt8, "jib_side_flag", self.jib_side_flag_callback, 10
-        )
+        self.create_subscription(UInt8, "jib_side_flag", self.jib_side_flag_callback, 10)
 
     def mainsail_angle_callback(self, msg):
         """Update the mainsail goal and send the full command."""
@@ -101,7 +88,7 @@ class Teensy(Node):
         """Read and publish telemetry from the Teensy."""
         data = {}
         try:
-            received = self.serial_port.read_telemetry(data)
+            received = self.serial_driver.read_telemetry(data)
         except OSError as exc:
             self.get_logger().warning(
                 f"Telemetry read failed: reason={exc}",
@@ -130,11 +117,7 @@ class Teensy(Node):
             dropped_packets_msg.data = data["dropped_packets"]
             self.dropped_packets_pub.publish(dropped_packets_msg)
 
-            side = (
-                "port"
-                if data["jib_side_flag"] == PHYSICAL.JIB_SIDE_PORT
-                else "starboard"
-            )
+            side = "port" if data["jib_side_flag"] == PHYSICAL.JIB_SIDE_PORT else "starboard"
             self.get_logger().debug(
                 f"RX mainsail={data['mainsail_angle']} rudder={data['rudder_angle']} "
                 f"jib={data['jib_angle']} jib_side={side} "
@@ -145,17 +128,13 @@ class Teensy(Node):
 
     def _send_command_to_teensy(self):
         """Send the latest mainsail, rudder, and jib goals in one packet."""
-        side = (
-            "port"
-            if self.desired_jib_side_flag == PHYSICAL.JIB_SIDE_PORT
-            else "starboard"
-        )
+        side = "port" if self.desired_jib_side_flag == PHYSICAL.JIB_SIDE_PORT else "starboard"
         command = (
             f"mainsail={self.desired_mainsail_angle} rudder={self.desired_rudder_angle} "
             f"jib={self.desired_jib_angle} jib_side={side}"
         )
         try:
-            self.serial_port.send_command(
+            self.serial_driver.send_command(
                 self.desired_mainsail_angle,
                 self.desired_rudder_angle,
                 self.desired_jib_angle,
@@ -172,7 +151,7 @@ class Teensy(Node):
     def destroy_node(self):
         """Close the serial connection and release ROS resources."""
         try:
-            self.serial_port.close()
+            self.serial_driver.close()
         finally:
             result = super().destroy_node()
         return result
