@@ -31,9 +31,6 @@ class FakeSerial:
         self.written.extend(data)
         return len(data)
 
-    def reset_input_buffer(self):
-        self.incoming.clear()
-
     def close(self):
         self.is_open = False
 

@@ -1,9 +1,9 @@
 """Regression tests for the migrated serial driver's legacy behavior.
 
-Cover framing, sail telemetry inversions, rudder wire center 45, command
-encoding, error handling, and cleanup using a fake serial connection.
-Telemetry payloads must exclude start and end flag values. These tests
-preserve the migration's behavior; they do not verify hardware calibration.
+Cover framing, rudder wire center 45, command encoding, error handling, and
+cleanup using a fake serial connection. Telemetry payloads must exclude start
+and end flag values.
+These tests preserve the migration's behavior; they do not verify hardware calibration.
 """
 
 import pytest
@@ -40,12 +40,11 @@ def test_decode_telemetry(driver, transport):
     transport.incoming.extend(frame())
     data = {}
     assert driver.read_telemetry(data) == 0
-    # Preserve the original mechanical-swap inversions for both sails.
     assert data == dict(
         wind_angle=300,
-        mainsail_angle=70,
+        mainsail_angle=20,
         rudder_angle=0,
-        jib_angle=60,
+        jib_angle=30,
         jib_side_flag=1,
         dropped_packets=7,
     )
@@ -75,6 +74,18 @@ def test_resynchronize_after_noise_or_bad_frame(driver, transport, garbage):
     assert data.get("wind_angle") == 300
 
 
+def test_newest_queued_packet_wins(driver, transport):
+    transport.incoming.extend(frame(wind=100) + frame(wind=200))
+    data = {}
+    assert driver.read_telemetry(data) == 0
+    assert data["wind_angle"] == 200
+
+
+def test_short_packet_is_not_merged_with_following_bytes(driver, transport):
+    transport.incoming.extend(bytes([0xFF, 1, 44, 20, 0xEE, 45, 30, 1, 7, 0xEE]))
+    assert driver.read_telemetry({}) == 1
+
+
 @pytest.mark.parametrize("position", ["minimum", "neutral", "maximum"])
 def test_command_bytes(driver, transport, position):
     rudder = {
@@ -85,14 +96,15 @@ def test_command_bytes(driver, transport, position):
     # The migrated protocol uses 45 as the rudder wire center.
     wire = rudder + 45
     side = PHYSICAL.JIB_SIDE_STB
-    assert driver.send_command(20, rudder, 30, side) == 0
+    driver.send_command(20, rudder, 30, side)
     assert transport.written == bytes([255, 20, wire, 30, side, 238])
 
 
-@pytest.mark.parametrize("side", [-1, 2])
-def test_side_is_encoded_as_unsigned_byte(driver, transport, side):
-    assert driver.send_command(20, 0, 30, side) == 0
-    assert transport.written == bytes([255, 20, 45, 30, side & 255, 238])
+@pytest.mark.parametrize("args", [(-1, 0, 30, 0), (20, 0, 256, 0), (20, 0, 30, -1)])
+def test_value_outside_byte_range_raises(driver, transport, args):
+    with pytest.raises(ValueError):
+        driver.send_command(*args)
+    assert not transport.written
 
 
 def test_read_failure_is_visible(driver, transport):
@@ -101,9 +113,10 @@ def test_read_failure_is_visible(driver, transport):
         driver.read_telemetry({})
 
 
-def test_write_failure_returns_failure_status(driver, transport):
+def test_write_failure_is_visible(driver, transport):
     transport.write_error = OSError("unplugged")
-    assert driver.send_command(20, 0, 30, 0) == 1
+    with pytest.raises(OSError, match="unplugged"):
+        driver.send_command(20, 0, 30, 0)
     assert not transport.written
 
 

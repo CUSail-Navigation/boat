@@ -155,23 +155,19 @@ class Teensy(Node):
             f"jib={self.desired_jib_angle} jib_side={side}"
         )
         try:
-            result = self.serial_port.send_command(
+            self.serial_port.send_command(
                 self.desired_mainsail_angle,
                 self.desired_rudder_angle,
                 self.desired_jib_angle,
                 self.desired_jib_side_flag,
             )
         except (OSError, ValueError) as exc:
-            reason = str(exc)
-        else:
-            if result == 0:
-                self.get_logger().debug(f"TX {command}")
-                return
-            reason = f"driver returned status {result}"
-        self.get_logger().warning(
-            f"Command failed: {command} reason={reason}",
-            throttle_duration_sec=TEENSY.WARNING_THROTTLE_SECONDS,
-        )
+            self.get_logger().warning(
+                f"Command failed: {command} reason={exc}",
+                throttle_duration_sec=TEENSY.WARNING_THROTTLE_SECONDS,
+            )
+            return
+        self.get_logger().debug(f"TX {command}")
 
     def destroy_node(self):
         """Close the serial connection and release ROS resources."""

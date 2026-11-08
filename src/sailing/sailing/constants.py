@@ -1,11 +1,9 @@
 """
 BOAT CONSTANTS: physical limits, serial protocol constants, Teensy node defaults.
-
 Use these to avoid "magic numbers" in code, and to keep everything specific to a
 given boat centrally located.
 """
 from dataclasses import dataclass
-
 
 @dataclass(frozen=True)
 class _Physical:
@@ -24,7 +22,6 @@ class _Physical:
     JIB_SIDE_PORT: int = 0
     JIB_SIDE_STB: int = 1
 
-
 @dataclass(frozen=True)
 class _Serial:
     """Serial protocol parameters; TX and RX are from the Teensy's perspective."""
@@ -39,7 +36,6 @@ class _Serial:
 
     BAUD_RATE: int = 9600
 
-
 @dataclass(frozen=True)
 class _Teensy:
     """Default settings and initial actuator positions for the Teensy node."""
@@ -49,7 +45,6 @@ class _Teensy:
     INITIAL_RUDDER_ANGLE: int = 0
     INITIAL_JIB_ANGLE: int = 0
     WARNING_THROTTLE_SECONDS: float = 5.0
-
 
 PHYSICAL = _Physical()
 SERIAL = _Serial()

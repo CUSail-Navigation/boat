@@ -23,7 +23,7 @@ def ros():
 @pytest.fixture
 def ros_node(ros, monkeypatch):
     hardware = Mock(
-        send_command=Mock(return_value=0), read_telemetry=Mock(return_value=1)
+        send_command=Mock(), read_telemetry=Mock(return_value=1)
     )
     monkeypatch.setattr(
         teensy_node.serial_port, "SerialPort", Mock(return_value=hardware)
@@ -146,20 +146,16 @@ def test_no_publication_on_missing_or_failed_read(ros_node, monkeypatch, error):
         logger.warning.assert_not_called()
 
 
-@pytest.mark.parametrize(
-    "error", [None, OSError("unplugged"), ValueError("invalid angle")]
-)
+@pytest.mark.parametrize("error", [OSError("unplugged"), ValueError("invalid angle")])
 def test_command_failure_is_reported(ros_node, monkeypatch, error):
     node, _, hardware, _ = ros_node
     logger = Mock(wraps=node.get_logger())
     monkeypatch.setattr(node, "get_logger", lambda: logger)
-    hardware.send_command.return_value = 1
     hardware.send_command.side_effect = error
     node.rudder_angle_callback(Int32(data=10))
     logger.warning.assert_called_once()
     assert "Command failed" in logger.warning.call_args.args[0]
-    if error:
-        assert str(error) in logger.warning.call_args.args[0]
+    assert str(error) in logger.warning.call_args.args[0]
 
 
 @pytest.mark.parametrize("period", [0, -0.1])
