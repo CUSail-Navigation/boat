@@ -31,17 +31,17 @@ inline uint32_t micros() {
     return g_mock_millis * 1000;
 }
 
-/** Jumps the fake clock to an absolute time, \code ms\endcode. */
+/** Jumps the fake clock to an absolute time, @c ms . */
 inline void mock_set_millis(const uint32_t ms) {
     g_mock_millis = ms;
 }
 
-/** Moves the fake clock forward by \code ms\endcode. Use this to trip \code RX_PACKET_TIMEOUT_MS\endcode. */
+/** Moves the fake clock forward by @c ms -- use this to trip @c RX_PACKET_TIMEOUT_MS . */
 inline void mock_advance_millis(const uint32_t ms) {
     g_mock_millis += ms;
 }
 
-/** Simulates a delay without sleeping: only moves the fake clock forward by \code ms\endcode. */
+/** Simulates a delay without sleeping: only moves the fake clock forward by @c ms . */
 inline void delay(const uint32_t ms) {
     g_mock_millis += ms;
 }
@@ -80,17 +80,17 @@ inline int analogRead(const uint8_t pin) {
     return pin < MOCK_PIN_COUNT ? g_mock_analog_values[pin] : 0;
 }
 
-/** Records an analog value written to a pin, in the same slot \code analogRead()\endcode reads back from. */
+/** Records an analog value written to a pin, in the same slot @c analogRead() reads back from. */
 inline void analogWrite(const uint8_t pin, const int value) {
     if (pin < MOCK_PIN_COUNT) g_mock_analog_values[pin] = value;
 }
 
-/** Stages the value \code analogRead(pin)\endcode will return, such as a raw anemometer ADC reading. */
+/** Stages the value @c analogRead(pin) will return, such as a raw anemometer ADC reading. */
 inline void mock_set_analog(const uint8_t pin, const int value) {
     if (pin < MOCK_PIN_COUNT) g_mock_analog_values[pin] = value;
 }
 
-/** Reads back the last level written by \code digitalWrite(pin)\endcode, for asserting on pin state. */
+/** Reads back the last level written by @c digitalWrite(pin), for asserting on pin state. */
 inline int mock_pin_level(const uint8_t pin) {
     return pin < MOCK_PIN_COUNT ? g_mock_pin_levels[pin] : 0;
 }
@@ -98,9 +98,9 @@ inline int mock_pin_level(const uint8_t pin) {
 
 // Specific implementation for the map() method.
 /**
- * A faithful port of the Teensy 4 core's \code map()\endcode -- NOT the simpler classic Arduino one, which leaves out
- * the round-off correction below and so returns different values. This is one of the few Teensy functions whose
- * internals have to be matched exactly here, because \code rudder_to_pwm()\endcode maps angles through it.
+ * A faithful port of the Teensy 4 core's @c map() -- NOT the simpler classic Arduino one, which leaves out the
+ * round-off correction below and so returns different values. This is one of the few Teensy functions whose
+ * internals have to be matched exactly here, because @c rudder_to_pwm() maps angles through it.
  */
 template <class T, class A, class B, class C, class D>
 long map(T _x, A _in_min, B _in_max, C _out_min, D _out_max,
@@ -163,7 +163,7 @@ public:
         return 1;
     }
 
-    /** Appends \code size\endcode bytes to the transmit log, reporting how many were written. */
+    /** Appends @c size bytes to the transmit log, reporting how many were written. */
     size_t write(const uint8_t* buffer, const size_t size) {
         tx_log.insert(tx_log.end(), buffer, buffer + size);
         return size;
@@ -177,12 +177,12 @@ public:
         return 0;
     }
 
-    /** Discards printed output, as \code print()\endcode does. */
+    /** Discards printed output, as @c print() does. */
     template <typename T> size_t println(const T&) {
         return 0;
     }
 
-    /** Discards a bare newline, as \code print()\endcode does. */
+    /** Discards a bare newline, as @c print() does. */
     size_t println() {
         return 0;
     }
@@ -194,7 +194,7 @@ public:
         for (const uint8_t byte : bytes) rx_queue.push_back(byte);
     }
 
-    /** Queues \code count\endcode bytes from a buffer, for feeding in a packet built at runtime. */
+    /** Queues @c count bytes from a buffer, for feeding in a packet built at runtime. */
     void mock_rx(const uint8_t* bytes, const size_t count) {
         for (size_t i = 0; i < count; ++i) rx_queue.push_back(bytes[i]);
     }
@@ -215,8 +215,8 @@ public:
     }
 };
 
-/** The Jetson link (USB serial): read by \code USBSerialMonitor\endcode, written by \code TelemetryControlTask\endcode. */
+/** The Jetson link (USB serial): read by @c USBSerialMonitor, written by @c TelemetryControlTask in firmware. */
 inline FakeStream Serial;
 
-/** The XBee radio link (hardware UART on pins 7/8): read by \code RadioSerialMonitor\endcode. */
+/** The XBee radio link (hardware UART on pins 7/8): read by @c RadioSerialMonitor in firmware. */
 inline FakeStream Serial2;

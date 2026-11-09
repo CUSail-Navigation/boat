@@ -9,14 +9,14 @@ namespace constants {
      * - All servos can go from 600 PWM (a "SMALL" angle) to 2400 PWM (a "LARGE" angle).
      * - In general, we choose ~800 as a baseline PWM to represent a minimum angle so that, just in case something
      *   physical changes on the boat, we can recalibrate the PWM that corresponds to this angle by dipping below this
-     *   baseline (until reaching \code SERVO_MIN_PULSE\endcode), and avoiding needing to re-screw the servos.
-     * - Rudder: This servo can turn 0.5 times, but mech did something to cut this in half, so that the rudder will only
-     *              go from -45 degrees (600 PWM) to 45 degrees (2400 PWM).
+     *   baseline (until reaching @c SERVO_MIN_PULSE), and avoiding needing to re-screw the servos.
+     * - Rudder: This servo can turn 0.5 times, but mech did something to cut this in half, so that the rudder will
+     *           only go from -45 degrees (600 PWM) to 45 degrees (2400 PWM).
      * - Mainsail: This servo can turn 7.85 times.
      * - Jib: We have two servos, one for each side of the boat. Both servos can turn 7.85 times.
      *
-     * NOTE: Any constants that are labeled \code TODO\endcode are ones that we plan to make runtime-changeable over
-     *       the mobile app. This functionality is not yet implemented.
+     * NOTE: Any constants that are labeled @c TODO are ones that we plan to make runtime-changeable over the mobile
+     *       app. This functionality is not yet implemented.
      */
     namespace servo {
         constexpr uint8_t RUDDER_PIN   = 4;
@@ -30,10 +30,10 @@ namespace constants {
         constexpr uint32_t RUDDER_MIN_PULSE = 600;                                                                      //TODO
         constexpr uint32_t RUDDER_MAX_PULSE = 2400;                                                                     //TODO
 
-        constexpr uint32_t JIB_PORT_MIN_PULSE = 750;                                                                    //TODO
-        constexpr uint32_t JIB_PORT_MAX_PULSE = 1750;                                                                   //TODO
+        constexpr uint32_t JIB_PORT_MIN_PULSE = 730;                                                                    //TODO
+        constexpr uint32_t JIB_PORT_MAX_PULSE = 1675;                                                                   //TODO
 
-        constexpr uint32_t JIB_STB_MIN_PULSE = 850;                                                                     //TODO
+        constexpr uint32_t JIB_STB_MIN_PULSE = 800;                                                                     //TODO
         constexpr uint32_t JIB_STB_MAX_PULSE = 2200;                                                                    //TODO
 
         constexpr uint32_t MAINSAIL_MIN_PULSE = 700;
@@ -41,7 +41,7 @@ namespace constants {
 
         constexpr uint8_t RUDDER_MIN_ANGLE = 0; // (2025-2026) 0-90 range = -45 to +45 degrees.                         //TODO
         constexpr uint8_t RUDDER_MAX_ANGLE = 90;                                                                        //TODO
-        constexpr uint32_t RUDDER_MID_PULSE = (RUDDER_MIN_PULSE + RUDDER_MAX_PULSE) / 2; // Amidships.
+        constexpr uint8_t RUDDER_MID_ANGLE = (RUDDER_MIN_ANGLE + RUDDER_MAX_ANGLE) / 2; // Amidships.
 
         constexpr uint8_t MAINSAIL_MIN_ANGLE = 0;                                                                       //TODO
         constexpr uint8_t MAINSAIL_MAX_ANGLE = 90;                                                                      //TODO
@@ -62,12 +62,12 @@ namespace constants {
         constexpr uint8_t JIB_SIDE_PORT = 0;
         constexpr uint8_t JIB_SIDE_STB = 1;
     }
-    /** SERIAL NOTES FROM 2025-2026 SEASON: <p>
+    /** SERIAL NOTES FROM 2025-2026 SEASON:
      * - USB BUFFER FORMAT (which is RX PACKET FORMAT between the start and end flags):
-     *   - [0] = \code mainsail_angle\endcode
-     *   - [1] = \code rudder_angle\endcode
-     *   - [2] = \code jib_angle\endcode
-     *   - [3] = \code jib_side_flag\endcode ( \code JIB_SIDE_PORT\endcode or \code JIB_SIDE_STB\endcode )
+     *   - [0] = @c mainsail_angle
+     *   - [1] = @c rudder_angle
+     *   - [2] = @c jib_angle
+     *   - [3] = @c jib_side_flag ( @c JIB_SIDE_PORT or @c JIB_SIDE_STB )
      * - TX PACKET FORMAT: [start_flag, wind_hi, wind_lo, mainsail_angle, rudder_angle,
      *                      jib_angle, jib_side_flag, dropped_packets, end_flag].
      */
@@ -76,15 +76,23 @@ namespace constants {
         constexpr uint8_t TX_END_FLAG = 0xEE;
         constexpr uint32_t TX_PERIOD_MS = 500;
 
+        constexpr uint8_t USB_BUFFER_LEN = 4;
+        constexpr uint8_t RADIO_BUFFER_LEN = 5;
         constexpr uint8_t RX_START_FLAG = 0xFF;
         constexpr uint8_t RX_END_FLAG = 0xEE;
         constexpr uint8_t RX_PACKET_TIMEOUT_MS = 50;
-        constexpr uint8_t USB_BUFFER_LEN = 4;
-        constexpr uint8_t RADIO_BUFFER_LEN = 5;
+        constexpr uint32_t RX_STALE_AFTER_MS = 2000;
 
         constexpr uint32_t BAUD_RATE = 9600;
     }
     namespace led {
         constexpr uint8_t LED_PIN = 13;
+
+        constexpr uint8_t RADIO_FLASHES = 1;
+        constexpr uint8_t USB_FLASHES = 2;
+        constexpr uint32_t FLASH_ON_MS = 150;
+        constexpr uint32_t FLASH_GAP_MS = 150;
+        constexpr uint32_t FLASH_PAUSE_MS = 1000;
+        constexpr uint32_t STALE_BLINK_MS = 1000;
     }
 }

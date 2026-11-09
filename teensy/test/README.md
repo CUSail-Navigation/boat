@@ -103,4 +103,4 @@ Some advantages that the mocks bring over real hardware:
        - Every servo is expected to be rigged so a larger commanded angle means a larger pulse width.
        - PWM output should never escape `[MIN_PULSE, MAX_PULSE]`.
      - A serial packet of exactly `<USB/RADIO>_BUFFER_LEN` payload bytes is accepted; anything shorter or longer is dropped.
-4. **For more information about PlatformIO Unit Testing, vist this [link](https://docs.platformio.org/en/latest/advanced/unit-testing/index.html).**
+4. **For more information about PlatformIO Unit Testing, visit this [link](https://docs.platformio.org/en/latest/advanced/unit-testing/index.html).**

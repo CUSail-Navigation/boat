@@ -12,7 +12,7 @@
 static constexpr int ADC_MAX = 1023;
 static constexpr uint16_t FULL_CIRCLE_DEGREES = 360;
 
-/** Take one reading, with the ADC staged at \code raw\endcode. */
+/** With the ADC staged at @c raw, take one reading. */
 static uint16_t read_wind_angle_for(AnemometerMonitor& monitor, const int raw) {
     mock_set_analog(constants::anemometer::ANEMOMETER_PIN, raw);
     monitor.execute();

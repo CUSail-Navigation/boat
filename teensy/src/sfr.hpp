@@ -25,5 +25,7 @@ namespace sfr {
         extern uint8_t radio_buffer[constants::serial::RADIO_BUFFER_LEN];
         extern uint8_t radio_flag;
         extern uint8_t dropped_packets;
+        extern uint32_t last_usb_packet_time;
+        extern uint32_t last_radio_packet_time;
     }
 }

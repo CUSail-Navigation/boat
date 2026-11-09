@@ -28,7 +28,7 @@ namespace layout {
 
 
 // State reset.
-/** Restore the SFR to the power-on values defined in \code sfr.cpp\endcode. */
+/** Restore the SFR to what is defined in @c sfr.cpp: power-on values. */
 inline void reset_sfr() {
     sfr::anemometer::wind_angle = 0;
 
@@ -41,12 +41,14 @@ inline void reset_sfr() {
     sfr::servo::jib_port_pwm = 0;
     sfr::servo::jib_stb_pwm = 0;
 
-    sfr::serial::update_servos_radio = false;
     sfr::serial::update_servos_usb = false;
-    sfr::serial::dropped_packets = 0;
+    sfr::serial::update_servos_radio = false;
     memset(sfr::serial::usb_buffer, 0, sizeof(sfr::serial::usb_buffer));
     memset(sfr::serial::radio_buffer, 0, sizeof(sfr::serial::radio_buffer));
     sfr::serial::radio_flag = 1;
+    sfr::serial::dropped_packets = 0;
+    sfr::serial::last_usb_packet_time = -constants::serial::RX_STALE_AFTER_MS;
+    sfr::serial::last_radio_packet_time = -constants::serial::RX_STALE_AFTER_MS;
 }
 
 /** Clear the fake clock, both serial ports, and all recorded pin/servo activity. */
@@ -62,7 +64,7 @@ inline void reset_mocks() {
     }
 }
 
-/** Call this function from Unity's \code setUp()\endcode so every test starts from the same baseline. */
+/** This function is called from Unity's @c setUp() so every test starts from the same baseline. */
 inline void reset_all() {
     reset_mocks();
     reset_sfr();
@@ -70,14 +72,14 @@ inline void reset_all() {
 
 
 // Packet construction.
-/** A distinct, deterministic payload byte for slot \code i\endcode that isn't one of the signal flags. */
+/** Returns a distinct and deterministic payload byte for slot @c i that isn't one of the signal flags. */
 inline uint8_t safe_payload_byte(const size_t i) {
     uint8_t byte = static_cast<uint8_t>(i + 1);
     while (byte == constants::serial::RX_START_FLAG || byte == constants::serial::RX_END_FLAG) ++byte;
     return byte;
 }
 
-/** Returns \code count\endcode distinct, flag-safe payload bytes. */
+/** Returns @c count distinct and flag-safe payload bytes. */
 inline std::vector<uint8_t> make_payload(const size_t count) {
     std::vector<uint8_t> payload;
     payload.reserve(count);
@@ -108,9 +110,9 @@ inline uint8_t mid_angle(const uint8_t lo, const uint8_t hi) {
 }
 
 /**
- * Finds an angle guaranteed to fall outside the inclusive range [lo, hi], for testing bounds rejection.
- * Returns \code false\endcode when the range covers the whole \code uint8_t\endcode domain and no invalid value
- * exists (the caller should then skip the test rather than assert something impossible).
+ * Finds an angle guaranteed to fall outside the inclusive range [@c lo, @c hi], for testing bounds rejection.
+ * Returns @c false when the range covers the whole @c uint8_t domain and no invalid value exists
+ * (if the caller relies on this method it should then skip the test rather than assert something impossible).
  */
 inline bool find_out_of_range_angle(const uint8_t lo, const uint8_t hi, uint8_t& out) {
     if (hi < 255) { out = static_cast<uint8_t>(hi + 1); return true; }
@@ -130,8 +132,7 @@ inline bool find_invalid_jib_side_flag(uint8_t& out) {
     return false;
 }
 
-/** Asserts that every step of a sweep goes up. Used for the rudder, whose \code map()\endcode is linear with no
- *  clamping. */
+/** Asserts that every step of a sweep goes up. Used for the rudder, whose @c map() is linear with no clamping. */
 inline void assert_strictly_increasing(const std::vector<uint32_t>& values, const char* what) {
     for (size_t i = 1; i < values.size(); ++i) {
         if (values[i] <= values[i - 1]) {
@@ -145,8 +146,8 @@ inline void assert_strictly_increasing(const std::vector<uint32_t>& values, cons
 }
 
 /**
- * Asserts that a sweep never goes down. Used for the sails, whose law-of-cosines mapping rises but then flattens once
- * it clamps at \code MAX_PULSE\endcode, so consecutive values are allowed to be equal but never to reverse.
+ * Asserts that a sweep never goes down. Used for the sails, whose law-of-cosines mapping rises but then flattens
+ * once it clamps at @c MAX_PULSE, so consecutive values are allowed to be equal but never to reverse.
  */
 inline void assert_non_decreasing(const std::vector<uint32_t>& values, const char* what) {
     for (size_t i = 1; i < values.size(); ++i) {

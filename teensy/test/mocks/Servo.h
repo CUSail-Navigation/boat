@@ -37,7 +37,7 @@ public:
         is_attached = false;
     }
 
-    /** Returns whether \code attach()\endcode has been called without a later \code detach()\endcode. */
+    /** Returns whether @c attach() has been called without a later @c detach(). */
     bool attached() const {
         return is_attached;
     }
@@ -51,12 +51,12 @@ public:
         }
     }
 
-    /** Records a pulse width given explicitly in microseconds (identical to \code write()\endcode for this mock). */
+    /** Records a pulse width given explicitly in microseconds (identical to @c write() for this mock). */
     void writeMicroseconds(const int value) {
         write(value);
     }
 
-    /** Returns the last value passed to \code write()\endcode. */
+    /** Returns the last value passed to @c write(). */
     int read() const {
         return last_value;
     }

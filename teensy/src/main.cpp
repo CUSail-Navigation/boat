@@ -1,6 +1,6 @@
 #include "MainControlLoop.hpp"
 
-MainControlLoop mcl;
+static MainControlLoop mcl;
 
 void setup(){
     Serial.begin(constants::serial::BAUD_RATE);  // (2025-2026) The Jetson, via USB.
