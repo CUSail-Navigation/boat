@@ -1,0 +1,57 @@
+name: Jetson CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "jetson/**"
+      - ".github/workflows/jetson.yml"
+  pull_request:
+    paths:
+      - "jetson/**"
+      - ".github/workflows/jetson.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jetson-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Lint Python with Ruff
+        uses: astral-sh/ruff-action@v4.0.0
+        with:
+          version: "0.14.6"
+          args: "check --output-format=github jetson/src"
+      - name: Check Python formatting
+        run: ruff format --check jetson/src
+
+  build-and-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Build ROS development image
+        run: docker build --pull -t boat-ci jetson/setup
+      - name: Build workspace and run package tests
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE/jetson/src:/home/ros2_user/ros2_ws/src:ro" \
+            boat-ci bash -c '
+              set -e
+              test_status=0
+              colcon test --return-code-on-test-failure || test_status=$?
+              colcon test-result --verbose
+              exit "$test_status"
+            '
