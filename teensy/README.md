@@ -82,7 +82,7 @@ Make sure you have:
 
 ### Expose WSL port to Docker image
 1. Run `ls /dev` or `lsusb` to view ports accessible by WSL. The Teensy will most likely appear as `/dev/ttyACM0`.
-2. Run the following command in WSL to expose the shared port with the docker image:
+2. From the repository root, run the following command in WSL to expose the shared port with the docker image:
 ```
-docker run -it --rm --name boat-dev -v "$(pwd)/src:/home/ros2_user/ros2_ws/src" --device=<port> boat-local
+docker run -it --rm --name boat-dev -v "$(pwd)/jetson/src:/home/ros2_user/ros2_ws/src" --device=<port> boat-local
 ```

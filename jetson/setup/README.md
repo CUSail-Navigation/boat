@@ -34,36 +34,40 @@ Before we start, ensure the following prerequisites are met:
    cd boat
    ```
 
-Before building the Docker image, let's quickly go over the project structure. Your project has two main directories: `setup/` and `src/`.
+Before building the Docker image, let's quickly go over the project structure. The ROS 2 code lives under `jetson/`, which has two directories: `setup/` and `src/`. The Teensy firmware lives separately in `teensy/`.
 
-- The `setup/` folder contains the `Dockerfile`, `requirements.txt`, and `setup_ros.sh` script used to configure your ROS 2 environment in Docker.
-- The `src/` folder holds the boat’s ROS 2 packages and code.
+- The `jetson/setup/` folder contains the `Dockerfile`, `requirements.txt`, and `setup_ros.sh` script used to configure your ROS 2 environment in Docker.
+- The `jetson/src/` folder holds the boat’s ROS 2 packages and code.
 
 Here’s the file structure of the project:
 
 ```
 /project-root
 │
-├── /setup
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── setup_ros.sh
+├── /jetson
+│   ├── /setup
+│   │   ├── Dockerfile
+│   │   ├── requirements.txt
+│   │   └── setup_ros.sh
+│   │
+│   └── /src
+│       └── (boat ROS 2 packages)
 │
-└── /src
-    └── (boat ROS 2 packages)
+└── /teensy
+    └── (Teensy 4.0 firmware)
 ```
 
 ### **Explanation of Files:**
 
-- **`/setup/Dockerfile`**: Defines the Docker image used to create a containerized ROS 2 environment. This includes setting up the base image, installing dependencies, and configuring the workspace.
+- **`/jetson/setup/Dockerfile`**: Defines the Docker image used to create a containerized ROS 2 environment. This includes setting up the base image, installing dependencies, and configuring the workspace.
 
-- **`/setup/requirements.txt`**: Contains a list of Python dependencies (if any) that will be installed inside the Docker container using `pip`. This file ensures that all necessary Python libraries are installed before running the ROS 2 packages.
+- **`/jetson/setup/requirements.txt`**: Contains a list of Python dependencies (if any) that will be installed inside the Docker container using `pip`. This file ensures that all necessary Python libraries are installed before running the ROS 2 packages.
 
-- **`/setup/setup_ros.sh`**: A shell script that automates the setup of your ROS 2 workspace. It builds the ROS 2 packages, sources the workspace, and keeps the container running interactively to test your code quicker.
+- **`/jetson/setup/setup_ros.sh`**: A shell script that automates the setup of your ROS 2 workspace. It builds the ROS 2 packages, sources the workspace, and keeps the container running interactively to test your code quicker.
 
-- **`/src/`**: This directory holds your ROS 2 packages, which contain the nodes, launch files, and any other necessary code for your ROS 2 application. This is where the core functionality of our project resides.
+- **`/jetson/src/`**: This directory holds your ROS 2 packages, which contain the nodes, launch files, and any other necessary code for your ROS 2 application. This is where the core functionality of our project resides.
 
-With this structure, `setup/` contains the environment configuration and `src/` holds the boat’s ROS 2 codebase. The `src/` directory is mounted into the Docker container for development.
+With this structure, `jetson/setup/` contains the environment configuration and `jetson/src/` holds the boat’s ROS 2 codebase. The `jetson/src/` directory is mounted into the Docker container for development.
 
 ---
 
@@ -72,7 +76,7 @@ With this structure, `setup/` contains the environment configuration and `src/` 
 To avoid issues with line endings that may prevent `setup_ros.sh` from running properly in the Docker container, keep the file saved with Unix-style (LF) line endings. If it was converted to Windows-style (CRLF), this command works on macOS and Linux:
 
 ```bash
-perl -pi -e 's/\r$//' setup/setup_ros.sh
+perl -pi -e 's/\r$//' jetson/setup/setup_ros.sh
 ```
 
 ---
@@ -82,11 +86,11 @@ perl -pi -e 's/\r$//' setup/setup_ros.sh
 1. Now, build the Docker image. Start Docker Desktop, then run this command from the repository root:
 
    ```bash
-   docker build -t boat-local setup
+   docker build -t boat-local jetson/setup
    ```
 
    - `-t boat-local`: Tags the image as `boat-local`.
-   - `setup`: Tells Docker to use the `setup/` directory as the build context.
+   - `jetson/setup`: Tells Docker to use the `jetson/setup/` directory as the build context.
 
 2. Docker will use the `Dockerfile` to create the image. This step may take a few minutes as Docker installs dependencies and sets up the environment.
 3. Note that if you get an error like `ERROR: Cannot connect to the Docker daemon`, launch the Docker GUI application you installed and run this command again.
@@ -99,11 +103,11 @@ Once the image is built, you can run the Docker container. Here's how to do it:
 
 ### **Run the Container with Volume Mounting**
 
-Run the following command from the project root to mount `src/` into the container workspace:
+Run the following command from the project root to mount `jetson/src/` into the container workspace:
 
 ```bash
 docker run -it --rm --name boat-dev \
-  -v "$(pwd)/src:/home/ros2_user/ros2_ws/src" \
+  -v "$(pwd)/jetson/src:/home/ros2_user/ros2_ws/src" \
   boat-local
 ```
 
@@ -112,7 +116,7 @@ docker run -it --rm --name boat-dev \
 - `-it`: Runs the container interactively, allowing you to enter commands.
 - `--rm`: Automatically removes the container when it exits.
 - `--name boat-dev`: Names the container `boat-dev`.
-- `-v "$(pwd)/src:/home/ros2_user/ros2_ws/src"`: Mounts the `src/` directory from your host machine into the container at `/home/ros2_user/ros2_ws/src`.
+- `-v "$(pwd)/jetson/src:/home/ros2_user/ros2_ws/src"`: Mounts the `jetson/src/` directory from your host machine into the container at `/home/ros2_user/ros2_ws/src`.
 - `boat-local`: The name of the Docker image you built in Step 2.
 
 The run command builds and sources the mounted ROS 2 workspace, then opens a Bash
@@ -137,24 +141,24 @@ package checks that a ROS 2 node can publish and receive a message.
 
 In this setup, the development process follows a typical Software Development Lifecycle (SDLC) workflow where you write and test your code iteratively. Here’s how it works with your ROS 2 project:
 
-1. **Developing Code in the `boat/src` Directory:**
-   - You will write and edit your code directly in the `boat/src` directory, which contains your ROS 2 packages. This is where all of your nodes, launch files, and configurations reside.
+1. **Developing Code in the `boat/jetson/src` Directory:**
+   - You will write and edit your code directly in the `boat/jetson/src` directory, which contains your ROS 2 packages. This is where all of your nodes, launch files, and configurations reside.
    - You are free to use any IDE or text editor you prefer (e.g., VS Code, PyCharm, or Sublime Text) to edit and manage your code. Since this directory is part of the local file system, your changes will be saved locally.
 
 2. **Testing Your Code in the Docker Container:**
-   - Once you have made changes and want to test them, you don’t need to worry about copying files into the container manually. The development command mounts your local `src/` directory into the Docker container.
+   - Once you have made changes and want to test them, you don’t need to worry about copying files into the container manually. The development command mounts your local `jetson/src/` directory into the Docker container.
    - To start testing, simply run the Docker image with the command we defined earlier:
 
      ```bash
      docker run -it --rm --name boat-dev \
-       -v "$(pwd)/src:/home/ros2_user/ros2_ws/src" \
+       -v "$(pwd)/jetson/src:/home/ros2_user/ros2_ws/src" \
        boat-local
      ```
 
-   - This will start the Docker container, mounting the `src/` directory from your local machine, and build the workspace inside the container. From here, you can run any ROS 2 nodes you wish to test.
+   - This will start the Docker container, mounting the `jetson/src/` directory from your local machine, and build the workspace inside the container. From here, you can run any ROS 2 nodes you wish to test.
 
 3. **Live Changes and ROS Node Rebuild:**
-   - **Live Changes:** Any modifications you make in the local `boat/src` directory will automatically be reflected inside the Docker container because of the mounted directory. This allows you to work and test your code seamlessly.
+   - **Live Changes:** Any modifications you make in the local `boat/jetson/src` directory will automatically be reflected inside the Docker container because of the mounted directory. This allows you to work and test your code seamlessly.
    - **Rebuilding ROS Nodes:** Although live changes are reflected in the container, changes to the code often require you to rebuild your ROS 2 workspace inside the container. Run this inside the container shell:
 
      ```bash
@@ -185,7 +189,7 @@ In this setup, the development process follows a typical Software Development Li
 By following this tutorial, you:
 - Cloned a ROS 2 project via SSH.
 - Built a Docker image from the repository.
-- Mounted the `src/` directory into the Docker container.
+- Mounted the `jetson/src/` directory into the Docker container.
 - Built and sourced the ROS 2 workspace within the container.
 
 This setup allows you to work in a consistent environment without worrying about your host machine's setup. Docker ensures that all dependencies and tools are available and isolated in the container.

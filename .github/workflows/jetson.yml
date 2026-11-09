@@ -1,16 +1,22 @@
-name: Boat CI
+name: Jetson CI
 
 on:
   push:
     branches: [main]
+    paths:
+      - "jetson/**"
+      - ".github/workflows/jetson.yml"
   pull_request:
+    paths:
+      - "jetson/**"
+      - ".github/workflows/jetson.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ros-ci-${{ github.workflow }}-${{ github.ref }}
+  group: jetson-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -25,9 +31,9 @@ jobs:
         uses: astral-sh/ruff-action@v4.0.0
         with:
           version: "0.14.6"
-          args: "check --output-format=github src"
+          args: "check --output-format=github jetson/src"
       - name: Check Python formatting
-        run: ruff format --check src
+        run: ruff format --check jetson/src
 
   ros-build:
     runs-on: ubuntu-24.04
@@ -37,11 +43,11 @@ jobs:
         with:
           persist-credentials: false
       - name: Build ROS development image
-        run: docker build --pull -t boat-ci setup
+        run: docker build --pull -t boat-ci jetson/setup
       - name: Build workspace and run package tests
         run: |
           docker run --rm \
-            -v "$GITHUB_WORKSPACE/src:/home/ros2_user/ros2_ws/src:ro" \
+            -v "$GITHUB_WORKSPACE/jetson/src:/home/ros2_user/ros2_ws/src:ro" \
             boat-ci bash -c '
               set -e
               test_status=0
@@ -49,28 +55,3 @@ jobs:
               colcon test-result --verbose
               exit "$test_status"
             '
-
-  teensy:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: teensy
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Cache PlatformIO
-        uses: actions/cache@v4
-        with:
-          path: ~/.platformio
-          key: pio-${{ runner.os }}-${{ hashFiles('teensy/platformio.ini') }}
-      - name: Install PlatformIO
-        run: pip install --upgrade platformio
-      - name: Build firmware
-        run: pio run -e teensy40
-      - name: Run unit tests
-        run: ./test/run_tests.sh

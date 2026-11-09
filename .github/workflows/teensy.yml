@@ -1,0 +1,46 @@
+name: Teensy CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "teensy/**"
+      - ".github/workflows/teensy.yml"
+  pull_request:
+    paths:
+      - "teensy/**"
+      - ".github/workflows/teensy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: teensy-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  teensy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: teensy
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ runner.os }}-${{ hashFiles('teensy/platformio.ini') }}
+      - name: Install PlatformIO
+        run: pip install --upgrade platformio
+      - name: Build firmware
+        run: pio run -e teensy40
+      - name: Run unit tests
+        run: ./test/run_tests.sh
