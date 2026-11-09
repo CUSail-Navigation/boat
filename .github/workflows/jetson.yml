@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ros-lint:
+  lint:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -35,7 +35,7 @@ jobs:
       - name: Check Python formatting
         run: ruff format --check jetson/src
 
-  ros-build:
+  build-and-test:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
