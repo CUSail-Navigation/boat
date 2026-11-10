@@ -6,14 +6,14 @@ class TeensySerialDriver:
     """A helper class that handles serial commands and telemetry for the Teensy."""
 
     def __init__(self, port):
-        """Open the serial connection."""
+        """Opens the serial connection."""
         self.buffer = []
         self.packet_started = False
         self.serial = serial.Serial(port, baudrate=SERIAL.BAUD_RATE)
 
     def send_command(self, mainsail_angle, rudder_angle, jib_angle, jib_side_flag):
         """
-        Send a properly formatted command packet to the Teensy.
+        Sends a properly formatted command packet to the Teensy.
         Each value passed in must be valid as defined by ``constants.py``
         (and must therefore fit into a byte).
 
@@ -55,13 +55,13 @@ class TeensySerialDriver:
             if incoming_byte == SERIAL.TX_START_FLAG:
                 self.packet_started = True
                 self.buffer = []
-            # If we are currently processing a packet, add data to the buffer.
+            # If we are currently processing a packet, add the new data to the buffer.
             elif self.packet_started and incoming_byte != SERIAL.TX_END_FLAG:
                 if len(self.buffer) < SERIAL.TX_PACKET_LEN:
                     self.buffer.append(incoming_byte)
-                else:  # Drop packet: buffer is full, but we have not reached END_FLAG.
+                else:  # Drop packet: the buffer is full, but we have not reached END_FLAG.
                     self.packet_started = False
-            # If we see END_FLAG, either process a full buffer into ``data``, or drop the packet.
+            # If we see END_FLAG and the buffer is full, process the buffer into ``data``.
             elif self.packet_started and incoming_byte == SERIAL.TX_END_FLAG:
                 self.packet_started = False
                 if len(self.buffer) == SERIAL.TX_PACKET_LEN:
