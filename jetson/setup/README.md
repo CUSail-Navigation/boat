@@ -88,11 +88,11 @@ docker run -it --rm --name boat-dev -v "$(pwd)/jetson/src:/home/ros2_user/ros2_w
 - `--rm`: automatically removes the container when it exits.
 - `--name boat-dev`: names the container `boat-dev`.
 - `-v "$(pwd)/jetson/src:/home/ros2_user/ros2_ws/src"`: mounts the `jetson/src/` directory from your host machine into 
-  the container at `/home/ros2_user/ros2_ws/src`.
+  the container at `/home/ros2_user/ros2_ws/src/`.
 - `boat-local`: the name of the Docker image you built in Step 2.
 
 The run command builds and sources the mounted ROS 2 workspace, and then opens a Bash shell inside the container. Build
-failures stop startup. You can run `ros2` commands in  this shell; ROS 2 does not need to be installed on your host.
+failures stop startup. You can run `ros2` commands in this shell; ROS 2 does not need to be installed on your host.
 
 ### Verify the installation:
 In the container shell opened above, run the package tests and inspect the results:
@@ -109,8 +109,8 @@ package checks that a ROS 2 node can publish and receive a message.
 
 In this setup, the development process follows a typical Software Development Lifecycle (SDLC) workflow where you write
 and test your code iteratively. Here’s how it works with our ROS 2 project:
-1. **Developing code in the `boat/jetson/src` directory:**
-   - You will write and edit your code directly in the `boat/jetson/src` directory, which contains your ROS 2 packages. 
+1. **Developing code in the `boat/jetson/src/` directory:**
+   - You will write and edit your code directly in the `boat/jetson/src/` directory, which contains your ROS 2 packages. 
      This is where all of your nodes, launch files, and configurations reside.
    - You are free to use any IDE or text editor you prefer to edit and manage your code. Since this directory is part
      of the local file system, your changes will be saved locally.
@@ -124,7 +124,7 @@ and test your code iteratively. Here’s how it works with our ROS 2 project:
    - This will start the Docker container, mounting the `jetson/src/` directory from your local machine, and build the
      workspace inside the container. From here, you can run any ROS 2 nodes you wish to test.
 3. **Live changes and ROS node rebuild:**
-   - Any modifications you make in the local `jetson/boat/src` directory will automatically be reflected inside the 
+   - Any modifications you make in the local `boat/jeston/src/` directory will automatically be reflected inside the 
      Docker container because of the mounted directory. This allows you to work and test your code seamlessly.
    - Although live changes are reflected in the container, changes to the code often require you to rebuild your ROS 2
      workspace inside the container. Run this inside the container shell:

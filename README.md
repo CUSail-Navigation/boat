@@ -1,4 +1,4 @@
-# [Cornell Autonomous Sailboat Team](https://cusail.com/): `boat` repository
+# [Cornell Autonomous Sailboat Project Team](https://cusail.com/): `boat` Repository
 This repository contains everything that makes CUSail's boat autonomous: the code that runs on the boat itself, and the
 setup, tooling, and tests that it depends on.
 
@@ -12,5 +12,5 @@ There are two main directories in this repository, which contain the code for ea
   information on how this codebase is organized.
 
 ## Continuous Integration (CI)
-Changes to files in the `jetson/` directory run [Jetson CI](.github/workflows/jetson.yml). Similarly, changes to files in the `teensy/`
-directory run [Teensy CI](.github/workflows/teensy.yml).
+Changes to files in the `jetson/` directory run [Jetson CI](.github/workflows/jetson.yml).
+Changes to files in the `teensy/` directory run [Teensy CI](.github/workflows/teensy.yml).
