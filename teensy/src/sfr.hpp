@@ -29,11 +29,11 @@ namespace sfr {
         extern uint32_t last_radio_packet_time;
     }
     namespace algo {
+        extern bool update_servos_algo;
         extern uint8_t mainsail_angle;
         extern uint8_t rudder_angle;
         extern uint8_t jib_angle;
         extern uint8_t jib_side_flag;
-        extern bool update_servos_algo;
     }
     namespace control {
         extern uint8_t mode;
