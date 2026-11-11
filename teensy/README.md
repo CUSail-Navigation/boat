@@ -1,8 +1,8 @@
 # Overview
 
 The `teensy` directory includes the code for our Teensy 4.0 microcontroller, which serves as the low-level controller 
-of our sailboat. The code manages the sensors, actuators (such as the servos for the sail and rudder), and communicates 
-with the Jetson via a serial connection.
+of our sailboat. The code manages the sensors, actuators (such as the servos for the sails and rudder), and 
+communicates with the Jetson via a serial connection.
 
 ---
 
