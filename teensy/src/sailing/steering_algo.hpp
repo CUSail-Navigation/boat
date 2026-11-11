@@ -1,9 +1,9 @@
 #pragma once
 #include "sfr.hpp"
 
-class SteeringAlgorithm {
+class SteeringAlgo {
 public:
-    SteeringAlgorithm();
+    SteeringAlgo();
     void execute();
 
 private:

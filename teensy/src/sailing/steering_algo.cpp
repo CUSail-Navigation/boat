@@ -1,4 +1,4 @@
-#include "steering_algorithm.hpp"
+#include "steering_algo.hpp"
 
 // NOTE: THIS IS A PLACEHOLDER. An actual algorithm can be written when GPS/IMU data comes into the Teensy.
 namespace {
@@ -8,13 +8,13 @@ namespace {
     constexpr uint32_t STEP_MS = 2000;
 }
 
-SteeringAlgorithm::SteeringAlgorithm() : step_index(0), last_step_time(0), last_update_time(0) {}
+SteeringAlgo::SteeringAlgo() : step_index(0), last_step_time(0), last_update_time(0) {}
 
 /**
  * Computes an angle to set the rudder to, effectively steering the boat, and writes
  * this goal angle to the SFR (staged in @c sfr::algo), every @c UPDATE_PERIOD_MS .
  */
-void SteeringAlgorithm::execute() {
+void SteeringAlgo::execute() {
     const uint32_t now = millis();
     if (now - last_update_time < constants::algo::UPDATE_PERIOD_MS) return;
     last_update_time = now;

@@ -1,9 +1,9 @@
 #pragma once
 #include "sfr.hpp"
 
-class SailTrimAlgorithm {
+class SailTrimAlgo {
 public:
-    SailTrimAlgorithm();
+    SailTrimAlgo();
     void execute();
 
 private:

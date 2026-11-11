@@ -11,7 +11,7 @@ with the Jetson via a serial connection.
 This code is structured based on [Lodestar](https://github.com/shihaocao/lodestar), a small scale electric demonstrator for the belly-flop and 
 tail-sitting control algorithms necessary for SpaceX's Starship.
 
-### main.cpp
+### Main (`main.cpp`)
 This file is comparable to a `.ino` file you would see in the Arduino IDE (notice setup and loop are exactly the same as 
 they would be in an Arduino file).
 
@@ -22,17 +22,17 @@ The MainControlLoop initializes and executes all monitors, algorithm tasks, and 
 SFR stands for State Field Registry. It contains values that should be available to the entire boat (sensor values, 
 serial buffer data, etc).
 
-### Monitors
+### Monitors (`monitors/`)
 Monitors read input from some source and update corresponding values in the SFR.
 
-### Algorithms
-The algorithms included here actually sail the boat: they update the SFR fields corresponding to the boat's sails 
-and rudder placement, based on the current state of the boat and other SFR values.
+### Sailing Algorithms (`sailing/`)
+The deterministic algorithms included here actually sail the boat: they update the SFR fields corresponding to the 
+boat's sails and rudder placement, based on the current state of the boat and other SFR values.
 
-### Control Tasks
+### Control Tasks (`control_tasks/`)
 Control tasks perform physical actions that interact with hardware based on the current state of the boat or SFR values.
 
-### constants.hpp
+### Constants (`constants.hpp`)
 This file contains values that will never be dynamically changed (mainly physical parameters for a specific boat). This 
 prevents "magic numbers" in the codebase.
 

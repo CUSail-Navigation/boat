@@ -1,12 +1,12 @@
-#include "sail_trim_algorithm.hpp"
+#include "sail_trim_algo.hpp"
 
-SailTrimAlgorithm::SailTrimAlgorithm() : last_update_time(0) {}
+SailTrimAlgo::SailTrimAlgo() : last_update_time(0) {}
 
 /**
  * Computes goal angles to set the sails to based on the current wind direction
  * and writes them to the SFR (staged in @c sfr::algo), every @c UPDATE_PERIOD_MS .
  */
-void SailTrimAlgorithm::execute() {
+void SailTrimAlgo::execute() {
     const uint32_t now = millis();
     if (now - last_update_time < constants::algo::UPDATE_PERIOD_MS) return;
     last_update_time = now;

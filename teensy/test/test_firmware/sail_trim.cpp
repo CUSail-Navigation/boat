@@ -1,17 +1,17 @@
 /**
- * SAIL TRIM TESTS -- SailTrimAlgorithm.
+ * SAIL TRIM TESTS -- SailTrimAlgo.
  * Tests in this file cover the goal sail angles that the deterministic algorithm writes for a given wind angle
  * (e.g. all-in inside the no-go zone, all-out dead downwind, symmetric otherwise), and that it only updates
  * once every UPDATE_PERIOD_MS.
  */
 #include "test_support.h"
 #include "suites.hpp"
-#include "algorithms/sail_trim_algorithm.hpp"
+#include "sailing/sail_trim_algo.hpp"
 
 
 // Helper functions.
 /** With the wind staged at @c wind_angle, let a full update period pass and run the algorithm once. */
-static void trim_for(SailTrimAlgorithm& algorithm, const uint16_t wind_angle) {
+static void trim_for(SailTrimAlgo& algorithm, const uint16_t wind_angle) {
     sfr::anemometer::wind_angle = wind_angle;
     mock_advance_millis(constants::algo::UPDATE_PERIOD_MS);
     algorithm.execute();
@@ -25,13 +25,13 @@ static void assert_sails_all_in(const char* message) {
 
 // Tests.
 static void test_head_to_wind_is_in_irons() {
-    SailTrimAlgorithm algorithm;
+    SailTrimAlgo algorithm;
     trim_for(algorithm, 0);
     assert_sails_all_in("Head-to-wind, both sails should be pulled all the way in");
 }
 
 static void test_dead_downwind_lets_sails_all_out() {
-    SailTrimAlgorithm algorithm;
+    SailTrimAlgo algorithm;
     trim_for(algorithm, 180);
 
     TEST_ASSERT_EQUAL_UINT8(constants::servo::MAINSAIL_MAX_ANGLE, sfr::algo::mainsail_angle);
@@ -39,7 +39,7 @@ static void test_dead_downwind_lets_sails_all_out() {
 }
 
 static void test_no_go_zone_edges() {
-    SailTrimAlgorithm algorithm;
+    SailTrimAlgo algorithm;
 
     for (const uint16_t wind : {constants::algo::NO_GO_HALF_WIDTH - 1, 360 - constants::algo::NO_GO_HALF_WIDTH + 1}) {
         trim_for(algorithm, wind);
@@ -51,7 +51,7 @@ static void test_no_go_zone_edges() {
 }
 
 static void test_sail_angles_rise_from_no_go_edge_to_dead_downwind() {
-    SailTrimAlgorithm algorithm;
+    SailTrimAlgo algorithm;
     std::vector<uint32_t> mainsail_sweep, jib_sweep;
 
     for (uint16_t wind = constants::algo::NO_GO_HALF_WIDTH; wind <= 180; ++wind) {
@@ -65,7 +65,7 @@ static void test_sail_angles_rise_from_no_go_edge_to_dead_downwind() {
 }
 
 static void test_angles_are_symmetric_and_jib_side_follows_the_wind() {
-    SailTrimAlgorithm algorithm;
+    SailTrimAlgo algorithm;
 
     trim_for(algorithm, 90);
     const uint8_t stb_mainsail = sfr::algo::mainsail_angle;
@@ -79,7 +79,7 @@ static void test_angles_are_symmetric_and_jib_side_follows_the_wind() {
 }
 
 static void test_only_updates_once_per_period() {
-    SailTrimAlgorithm algorithm;
+    SailTrimAlgo algorithm;
     trim_for(algorithm, 180);
     sfr::algo::update_servos_algo = false;
 
