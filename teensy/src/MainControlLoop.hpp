@@ -2,10 +2,11 @@
 #include "Monitors/AnemometerMonitor.hpp"
 #include "Monitors/RadioSerialMonitor.hpp"
 #include "Monitors/USBSerialMonitor.hpp"
-#include "ControlTasks/LedControlTask.hpp"
+#include "Algorithms/SailTrimAlgorithm.hpp"
+#include "Algorithms/SteeringAlgorithm.hpp"
 #include "ControlTasks/ServoControlTask.hpp"
+#include "ControlTasks/LedControlTask.hpp"
 #include "ControlTasks/TelemetryControlTask.hpp"
-#include "sfr.hpp"
 
 class MainControlLoop {
 public:
@@ -16,7 +17,9 @@ protected:
     AnemometerMonitor anemometer_monitor;
     RadioSerialMonitor radio_serial_monitor;
     USBSerialMonitor usb_serial_monitor;
-    LedControlTask led_control_task;
+    SailTrimAlgorithm sail_trim_algorithm;
+    SteeringAlgorithm steering_algorithm;
     ServoControlTask servo_control_task;
+    LedControlTask led_control_task;
     TelemetryControlTask telemetry_control_task;
 };
