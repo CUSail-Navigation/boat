@@ -16,6 +16,7 @@ int main(int, char**) {
     run_telemetry_tests();
     run_anemometer_tests();
     run_led_tests();
+    run_sail_trim_tests();
 
     return UNITY_END();
 }
