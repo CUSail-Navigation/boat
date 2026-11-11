@@ -8,7 +8,7 @@
  */
 #include "test_support.h"
 #include "suites.hpp"
-#include "ControlTasks/ServoControlTask.hpp"
+#include "control_tasks/servo_control_task.hpp"
 
 
 static_assert(constants::serial::USB_BUFFER_LEN > layout::USB_JIB_SIDE, "usb_buffer is too small for the documented USB layout");
@@ -49,7 +49,7 @@ static void stage_radio_command(const uint8_t mainsail, const uint8_t rudder, co
     sfr::serial::radio_set_mode = constants::control::RC;
 }
 
-/** Stage an algorithm command in the SFR exactly as the @c Algorithms/ tasks would (does not change the mode). */
+/** Stage an algorithm command in the SFR exactly as the @c algorithms/ tasks would (does not change the mode). */
 static void stage_algo_command(const uint8_t mainsail, const uint8_t rudder, const uint8_t jib, const uint8_t jib_side) {
     sfr::algo::mainsail_angle = mainsail;
     sfr::algo::rudder_angle = rudder;

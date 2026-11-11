@@ -1,4 +1,4 @@
-#include "RadioSerialMonitor.hpp"
+#include "radio_serial_monitor.hpp"
 
 /** Reads and assembles incoming radio packets from @c Serial2 into @c radio_buffer . */
 void RadioSerialMonitor::execute() {

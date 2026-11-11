@@ -4,8 +4,8 @@
  */
 #include "test_support.h"
 #include "suites.hpp"
-#include "Monitors/USBSerialMonitor.hpp"
-#include "Monitors/RadioSerialMonitor.hpp"
+#include "monitors/usb_serial_monitor.hpp"
+#include "monitors/radio_serial_monitor.hpp"
 
 
 // Assumptions the framing depends on -- if one of these ever fails, the other tests in this file are meaningless.

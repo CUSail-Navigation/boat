@@ -1,4 +1,4 @@
-#include "ServoControlTask.hpp"
+#include "servo_control_task.hpp"
 
 /** Construct a @c ServoControlTask and initialize all servos to default values. */
 ServoControlTask::ServoControlTask() {

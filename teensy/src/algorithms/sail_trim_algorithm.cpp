@@ -1,4 +1,4 @@
-#include "SailTrimAlgorithm.hpp"
+#include "sail_trim_algorithm.hpp"
 
 SailTrimAlgorithm::SailTrimAlgorithm() : last_update_time(0) {}
 

@@ -5,7 +5,7 @@
  */
 #include "test_support.h"
 #include "suites.hpp"
-#include "ControlTasks/LedControlTask.hpp"
+#include "control_tasks/led_control_task.hpp"
 
 
 // The codes are only useful if a person can tell them apart.

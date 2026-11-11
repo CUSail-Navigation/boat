@@ -1,12 +1,12 @@
 #pragma once
-#include "Monitors/AnemometerMonitor.hpp"
-#include "Monitors/RadioSerialMonitor.hpp"
-#include "Monitors/USBSerialMonitor.hpp"
-#include "Algorithms/SailTrimAlgorithm.hpp"
-#include "Algorithms/SteeringAlgorithm.hpp"
-#include "ControlTasks/ServoControlTask.hpp"
-#include "ControlTasks/LedControlTask.hpp"
-#include "ControlTasks/TelemetryControlTask.hpp"
+#include "monitors/anemometer_monitor.hpp"
+#include "monitors/radio_serial_monitor.hpp"
+#include "monitors/usb_serial_monitor.hpp"
+#include "algorithms/sail_trim_algorithm.hpp"
+#include "algorithms/steering_algorithm.hpp"
+#include "control_tasks/servo_control_task.hpp"
+#include "control_tasks/led_control_task.hpp"
+#include "control_tasks/telemetry_control_task.hpp"
 
 class MainControlLoop {
 public:

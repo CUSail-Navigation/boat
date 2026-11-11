@@ -1,4 +1,4 @@
-#include "AnemometerMonitor.hpp"
+#include "anemometer_monitor.hpp"
 
 AnemometerMonitor::AnemometerMonitor() {
     pinMode(constants::anemometer::ANEMOMETER_PIN, INPUT);

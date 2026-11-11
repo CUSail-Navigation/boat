@@ -6,7 +6,7 @@
  */
 #include "test_support.h"
 #include "suites.hpp"
-#include "Algorithms/SailTrimAlgorithm.hpp"
+#include "algorithms/sail_trim_algorithm.hpp"
 
 
 // Helper functions.

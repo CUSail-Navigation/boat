@@ -1,5 +1,5 @@
 #pragma once
-#include "SerialMonitorBase.hpp"
+#include "serial_monitor_base.hpp"
 
 class RadioSerialMonitor : public SerialMonitorBase {
 public:

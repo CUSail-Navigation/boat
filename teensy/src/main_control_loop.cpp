@@ -1,4 +1,4 @@
-#include "MainControlLoop.hpp"
+#include "main_control_loop.hpp"
 
 /** Delay startup by 1 second to let hardware/peripherals stabilize before the main loop begins. */
 MainControlLoop::MainControlLoop() {

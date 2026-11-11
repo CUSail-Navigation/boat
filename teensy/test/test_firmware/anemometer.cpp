@@ -5,7 +5,7 @@
  */
 #include "test_support.h"
 #include "suites.hpp"
-#include "Monitors/AnemometerMonitor.hpp"
+#include "monitors/anemometer_monitor.hpp"
 
 
 // Constants and helper functions.

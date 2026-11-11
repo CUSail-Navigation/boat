@@ -1,4 +1,4 @@
-#include "SteeringAlgorithm.hpp"
+#include "steering_algorithm.hpp"
 
 // NOTE: THIS IS A PLACEHOLDER. An actual algorithm can be written when GPS/IMU data comes into the Teensy.
 namespace {
