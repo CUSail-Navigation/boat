@@ -167,8 +167,8 @@ void ServoControlTask::actuate_servo(Servo& servo, const uint32_t pwm) {
  * - In either case, this final @c sheet_len value will map to a PWM value based on the specific servo and the
  *   circumference of its wheel.
  *
- * Note that this method assumes that the max PWM value of the servo in question allows for the sail to be set to
- * @c angle -- if this is not the case, it will return a value greater than the servo's PWM range.
+ * Note that this method assumes that the maximum PWM value of the servo in question allows for the sail to be set to
+ * @c angle . If this is not the case, it will return a value greater than that servo's maximum PWM.
  */
 uint32_t ServoControlTask::law_of_cos_map(const uint8_t angle, const uint32_t two_b_sqd, const float PWM_per_turn,
                                           const float wheel_circum, const bool mainsail) {
