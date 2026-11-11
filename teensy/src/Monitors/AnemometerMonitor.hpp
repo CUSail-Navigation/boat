@@ -4,5 +4,5 @@
 class AnemometerMonitor {
 public:
     AnemometerMonitor();
-    void execute();
+    static void execute();
 };
