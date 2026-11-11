@@ -27,11 +27,11 @@ namespace sfr {
         uint32_t last_radio_packet_time = -constants::serial::RX_STALE_AFTER_MS;
     }
     namespace algo {
+        bool update_servos_algo = false;
         uint8_t mainsail_angle = constants::servo::MAINSAIL_MAX_ANGLE;
         uint8_t rudder_angle = constants::servo::RUDDER_MID_ANGLE;
         uint8_t jib_angle = constants::servo::JIB_MAX_ANGLE;
         uint8_t jib_side_flag = constants::servo::JIB_SIDE_PORT;
-        bool update_servos_algo = false;
     }
     namespace control {
         uint8_t mode = constants::control::RC;
