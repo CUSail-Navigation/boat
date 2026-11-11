@@ -62,6 +62,16 @@ namespace constants {
         constexpr uint8_t JIB_SIDE_PORT = 0;
         constexpr uint8_t JIB_SIDE_STB = 1;
     }
+    namespace control {
+        constexpr uint8_t RC = 0;
+        constexpr uint8_t ROS_ALGO = 1;
+        constexpr uint8_t DETERM_ALGO = 2;
+    }
+    namespace algo {
+        constexpr uint16_t NO_GO_WIDTH = 90;
+        constexpr uint16_t NO_GO_HALF_WIDTH = NO_GO_WIDTH / 2;
+        constexpr uint32_t UPDATE_PERIOD_MS = 200;
+    }
     /** SERIAL NOTES FROM 2025-2026 SEASON:
      * - USB BUFFER FORMAT (which is RX PACKET FORMAT between the start and end flags):
      *   - [0] = @c mainsail_angle
@@ -88,8 +98,9 @@ namespace constants {
     namespace led {
         constexpr uint8_t LED_PIN = 13;
 
-        constexpr uint8_t RADIO_FLASHES = 1;
-        constexpr uint8_t USB_FLASHES = 2;
+        constexpr uint8_t RC_FLASHES = control::RC + 1;
+        constexpr uint8_t ROS_ALGO_FLASHES = control::ROS_ALGO + 1;
+        constexpr uint8_t DETERM_ALGO_FLASHES = control::DETERM_ALGO + 1;
         constexpr uint32_t FLASH_ON_MS = 150;
         constexpr uint32_t FLASH_GAP_MS = 150;
         constexpr uint32_t FLASH_PAUSE_MS = 1000;

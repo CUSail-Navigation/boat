@@ -1,4 +1,4 @@
-#include "ServoControlTask.hpp"
+#include "servo_control_task.hpp"
 
 /** Construct a @c ServoControlTask and initialize all servos to default values. */
 ServoControlTask::ServoControlTask() {
@@ -13,25 +13,49 @@ ServoControlTask::ServoControlTask() {
 }
 
 /**
- *  Update the servos if valid serial data is ready and waiting.
- *
- *  Note that radio mode ( @code radio_flag != 0@endcode ) takes priority over USB mode. Flags differ between serial
- *  modes, but the resultant servo behavior should be identical.
- *
- *  - Radio buffer layout:   @code [radio_flag, mainsail_angle, rudder_angle, jib_angle, jib_side_flag]@endcode
+ *  Decides which input is in control (see @c select_mode()), and then updates the servos if
+ *  that input has a valid new command ready and waiting.
+ *  - Radio buffer layout:   @code [radio_set_mode, mainsail_angle, rudder_angle, jib_angle, jib_side_flag]@endcode
  *  - USB buffer layout:     @code [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]@endcode
  */
 void ServoControlTask::execute() {
-    if (sfr::serial::radio_flag != 0) { // RADIO MODE.
-        if (!sfr::serial::update_servos_radio) return;
-        apply_commands(sfr::serial::radio_buffer[1], sfr::serial::radio_buffer[2],
-                        sfr::serial::radio_buffer[3], sfr::serial::radio_buffer[4]);
-        sfr::serial::update_servos_radio = false;
-    } else if (sfr::serial::update_servos_usb) { // USB MODE.
-        apply_commands(sfr::serial::usb_buffer[0], sfr::serial::usb_buffer[1],
-                        sfr::serial::usb_buffer[2], sfr::serial::usb_buffer[3]);
-        sfr::serial::update_servos_usb = false;
+    sfr::control::mode = select_mode();
+    switch (sfr::control::mode) {
+        case constants::control::RC:
+            if (!sfr::serial::update_servos_radio) return;
+            apply_commands(sfr::serial::radio_buffer[1], sfr::serial::radio_buffer[2],
+                           sfr::serial::radio_buffer[3], sfr::serial::radio_buffer[4]);
+            sfr::serial::update_servos_radio = false;
+            break;
+        case constants::control::ROS_ALGO:
+            if (!sfr::serial::update_servos_usb) return;
+            apply_commands(sfr::serial::usb_buffer[0], sfr::serial::usb_buffer[1],
+                           sfr::serial::usb_buffer[2], sfr::serial::usb_buffer[3]);
+            sfr::serial::update_servos_usb = false;
+            break;
+        case constants::control::DETERM_ALGO:
+            if (!sfr::algo::update_servos_algo) return;
+            apply_commands(sfr::algo::mainsail_angle, sfr::algo::rudder_angle,
+                           sfr::algo::jib_angle, sfr::algo::jib_side_flag);
+            sfr::algo::update_servos_algo = false;
+            break;
+        default: ;
     }
+}
+
+/**
+ * Decides which input is in control.
+ *
+ * This is normally the control mode that @c radio_set_mode reflects. The only exception is when the USB link
+ * is stale: in this case, we fall back from @c ROS_ALGO to @c DETERM_ALGO so the boat continues to move.
+ */
+uint8_t ServoControlTask::select_mode() {
+    if (sfr::serial::radio_set_mode == constants::control::DETERM_ALGO) return constants::control::DETERM_ALGO;
+    if (sfr::serial::radio_set_mode == constants::control::ROS_ALGO) {
+        const bool usb_stale = millis() - sfr::serial::last_usb_packet_time >= constants::serial::RX_STALE_AFTER_MS;
+        return usb_stale ? constants::control::DETERM_ALGO : constants::control::ROS_ALGO;
+    }
+    return constants::control::RC; // Default to RC mode (any flag besides DETERM_ALGO and ROS_ALGO).
 }
 
 /** A utility method to actually apply values to servos, based on the received data and if checks on the data pass. */
@@ -143,8 +167,8 @@ void ServoControlTask::actuate_servo(Servo& servo, const uint32_t pwm) {
  * - In either case, this final @c sheet_len value will map to a PWM value based on the specific servo and the
  *   circumference of its wheel.
  *
- * Note that this method assumes that the max PWM value of the servo in question allows for the sail to be set to
- * @c angle. If this is not the case, it will return a value greater than the servo's PWM range.
+ * Note that this method assumes that the maximum PWM value of the servo in question allows for the sail to be set to
+ * @c angle . If this is not the case, it will return a value greater than that servo's maximum PWM.
  */
 uint32_t ServoControlTask::law_of_cos_map(const uint8_t angle, const uint32_t two_b_sqd, const float PWM_per_turn,
                                           const float wheel_circum, const bool mainsail) {

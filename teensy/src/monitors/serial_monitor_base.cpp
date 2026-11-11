@@ -1,4 +1,4 @@
-#include "SerialMonitorBase.hpp"
+#include "serial_monitor_base.hpp"
 
 SerialMonitorBase::SerialMonitorBase() : buffer_index(0), packet_started(false), packet_start_time(0) {}
 

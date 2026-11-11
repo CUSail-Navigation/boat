@@ -8,13 +8,13 @@ namespace sfr {
         extern uint16_t wind_angle;
     }
     namespace servo {
-        extern uint8_t rudder_angle;
         extern uint8_t mainsail_angle;
+        extern uint8_t rudder_angle;
         extern uint8_t jib_angle;
         extern uint8_t jib_side_flag;
 
-        extern uint32_t rudder_pwm;
         extern uint32_t mainsail_pwm;
+        extern uint32_t rudder_pwm;
         extern uint32_t jib_port_pwm;
         extern uint32_t jib_stb_pwm;
     }
@@ -23,9 +23,19 @@ namespace sfr {
         extern bool update_servos_radio;
         extern uint8_t usb_buffer[constants::serial::USB_BUFFER_LEN];
         extern uint8_t radio_buffer[constants::serial::RADIO_BUFFER_LEN];
-        extern uint8_t radio_flag;
+        extern uint8_t radio_set_mode;
         extern uint8_t dropped_packets;
         extern uint32_t last_usb_packet_time;
         extern uint32_t last_radio_packet_time;
+    }
+    namespace algo {
+        extern bool update_servos_algo;
+        extern uint8_t mainsail_angle;
+        extern uint8_t rudder_angle;
+        extern uint8_t jib_angle;
+        extern uint8_t jib_side_flag;
+    }
+    namespace control {
+        extern uint8_t mode;
     }
 }

@@ -5,7 +5,7 @@
  */
 #include "test_support.h"
 #include "suites.hpp"
-#include "ControlTasks/TelemetryControlTask.hpp"
+#include "control_tasks/telemetry_control_task.hpp"
 
 
 // Helper function.

@@ -12,3 +12,4 @@ void run_servo_control_tests();
 void run_telemetry_tests();
 void run_anemometer_tests();
 void run_led_tests();
+void run_sail_trim_tests();

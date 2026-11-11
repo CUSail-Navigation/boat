@@ -1,4 +1,4 @@
-#include "MainControlLoop.hpp"
+#include "main_control_loop.hpp"
 
 /** Delay startup by 1 second to let hardware/peripherals stabilize before the main loop begins. */
 MainControlLoop::MainControlLoop() {
@@ -10,7 +10,9 @@ void MainControlLoop::execute() {
     anemometer_monitor.execute();
     radio_serial_monitor.execute();
     usb_serial_monitor.execute();
-    led_control_task.execute();
+    sail_trim_algo.execute();
+    steering_algo.execute();
     servo_control_task.execute();
+    led_control_task.execute();
     telemetry_control_task.execute();
 }
