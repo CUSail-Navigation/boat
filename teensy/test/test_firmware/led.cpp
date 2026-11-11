@@ -9,7 +9,9 @@
 
 
 // The codes are only useful if a person can tell them apart.
-static_assert(constants::led::RADIO_FLASHES != constants::led::USB_FLASHES, "Radio and USB codes must differ");
+static_assert(constants::led::RC_FLASHES != constants::led::ROS_ALGO_FLASHES &&
+              constants::led::RC_FLASHES != constants::led::DETERM_ALGO_FLASHES &&
+              constants::led::ROS_ALGO_FLASHES != constants::led::DETERM_ALGO_FLASHES, "Every mode code must differ");
 static_assert(constants::led::STALE_BLINK_MS != constants::led::FLASH_ON_MS, "A stale blink must not look like a flash");
 
 
@@ -66,7 +68,7 @@ static void test_execute_never_blocks() {
 
     sfr::serial::last_radio_packet_time = millis();
     LedControlTask fresh_task;
-    fresh_task.execute(); // Radio in control and fresh.
+    fresh_task.execute(); // RC in control and fresh.
 
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, millis(), "The LED task must never wait inside `execute()`");
 }
@@ -76,26 +78,34 @@ static void test_boot_shows_stale_blink() {
     assert_stale_blink(observe(task, 0, stale_code_length()), "No packets received yet: input is stale");
 }
 
-static void test_radio_in_control_and_fresh_shows_radio_code() {
-    sfr::serial::radio_flag = 1;
+static void test_rc_in_control_and_fresh_shows_rc_code() {
+    sfr::control::mode = constants::control::RC;
     sfr::serial::last_radio_packet_time = 0;
 
     LedControlTask task;
-    assert_flash_code(observe(task, 0, flash_code_length(constants::led::RADIO_FLASHES)),
-                      constants::led::RADIO_FLASHES, "A fresh radio in control should show the radio code");
+    assert_flash_code(observe(task, 0, flash_code_length(constants::led::RC_FLASHES)),
+                      constants::led::RC_FLASHES, "A fresh radio in control should show the RC code");
 }
 
-static void test_usb_in_control_and_fresh_shows_usb_code() {
-    sfr::serial::radio_flag = 0;
+static void test_ros_in_control_and_fresh_shows_ros_code() {
+    sfr::control::mode = constants::control::ROS_ALGO;
     sfr::serial::last_usb_packet_time = 0;
 
     LedControlTask task;
-    assert_flash_code(observe(task, 0, flash_code_length(constants::led::USB_FLASHES)),
-                      constants::led::USB_FLASHES, "A fresh USB input in control should show the USB code");
+    assert_flash_code(observe(task, 0, flash_code_length(constants::led::ROS_ALGO_FLASHES)),
+                      constants::led::ROS_ALGO_FLASHES, "A fresh USB input in control should show the ROS code");
+}
+
+static void test_determ_in_control_shows_determ_code_even_with_no_serial_input() {
+    sfr::control::mode = constants::control::DETERM_ALGO; // Both serial inputs are stale (nothing received since boot).
+
+    LedControlTask task;
+    assert_flash_code(observe(task, 0, flash_code_length(constants::led::DETERM_ALGO_FLASHES)),
+                      constants::led::DETERM_ALGO_FLASHES, "The deterministic algorithm is never stale");
 }
 
 static void test_only_the_input_in_control_counts() {
-    sfr::serial::radio_flag = 1;           // Radio is in control...
+    sfr::control::mode = constants::control::RC;  // RC is in control...
     sfr::serial::last_usb_packet_time = 0; // but only USB is sending.
 
     LedControlTask task;
@@ -105,19 +115,19 @@ static void test_only_the_input_in_control_counts() {
 
 static void test_flash_code_is_not_cut_off_when_input_goes_stale() {
     constexpr uint32_t start = constants::serial::RX_STALE_AFTER_MS;
-    const uint32_t usb_code_length = flash_code_length(constants::led::USB_FLASHES);
-    sfr::serial::radio_flag = 0;
+    const uint32_t usb_code_length = flash_code_length(constants::led::ROS_ALGO_FLASHES);
+    sfr::control::mode = constants::control::ROS_ALGO;
     sfr::serial::last_usb_packet_time = start - constants::serial::RX_STALE_AFTER_MS + 1; // Stale 1 ms into the code.
 
     LedControlTask task;
-    assert_flash_code(observe(task, start, usb_code_length), constants::led::USB_FLASHES,
+    assert_flash_code(observe(task, start, usb_code_length), constants::led::ROS_ALGO_FLASHES,
                       "A code that started fresh must play in full, even if the input goes stale partway through");
     assert_stale_blink(observe(task, start + usb_code_length, stale_code_length()),
                        "The next code should then show that the input went stale");
 }
 
 static void test_stale_blink_is_not_cut_off_when_input_becomes_fresh() {
-    sfr::serial::radio_flag = 1;
+    sfr::control::mode = constants::control::RC;
 
     LedControlTask task;
     const Observation first_ms = observe(task, 0, 1); // The stale blink starts.
@@ -136,8 +146,9 @@ void run_led_tests() {
     Unity.TestFile = __FILE__; // Report failures against this file, not main.cpp.
     RUN_TEST(test_execute_never_blocks);
     RUN_TEST(test_boot_shows_stale_blink);
-    RUN_TEST(test_radio_in_control_and_fresh_shows_radio_code);
-    RUN_TEST(test_usb_in_control_and_fresh_shows_usb_code);
+    RUN_TEST(test_rc_in_control_and_fresh_shows_rc_code);
+    RUN_TEST(test_ros_in_control_and_fresh_shows_ros_code);
+    RUN_TEST(test_determ_in_control_shows_determ_code_even_with_no_serial_input);
     RUN_TEST(test_only_the_input_in_control_counts);
     RUN_TEST(test_flash_code_is_not_cut_off_when_input_goes_stale);
     RUN_TEST(test_stale_blink_is_not_cut_off_when_input_becomes_fresh);

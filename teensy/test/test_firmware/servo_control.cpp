@@ -1,8 +1,9 @@
 /**
  * SERVO CONTROL TESTS -- ServoControlTask.
  * Tests in this file cover two main areas of functionality:
- *  1. Mode arbitration (radio serial must win over USB serial whenever radio_flag != 0, a fresh radio or USB command
- *     applies and clears its own update flag, an idle cycle with nothing pending commands no servo at all).
+ *  1. Mode arbitration (radio_set_mode picks RC, ROS, or the deterministic algorithm; ROS falls back to the
+ *     deterministic algorithm when USB is stale; a fresh command from whichever input is in control applies
+ *     and clears its own update flag; an idle cycle with nothing pending commands no servo at all).
  *  2. Angle to PWM mapping.
  */
 #include "test_support.h"
@@ -26,25 +27,35 @@ static uint8_t default_jib() {
     return mid_angle(constants::servo::JIB_MIN_ANGLE, constants::servo::JIB_MAX_ANGLE);
 }
 
-/** Stage a USB command in the SFR exactly as @c USBSerialMonitor would, and select USB mode. */
+/** Stage a (fresh) USB command in the SFR exactly as @c USBSerialMonitor would, and request ROS mode. */
 static void stage_usb_command(const uint8_t mainsail, const uint8_t rudder, const uint8_t jib, const uint8_t jib_side) {
     sfr::serial::usb_buffer[layout::USB_MAINSAIL] = mainsail;
     sfr::serial::usb_buffer[layout::USB_RUDDER] = rudder;
     sfr::serial::usb_buffer[layout::USB_JIB] = jib;
     sfr::serial::usb_buffer[layout::USB_JIB_SIDE] = jib_side;
     sfr::serial::update_servos_usb = true;
-    sfr::serial::radio_flag = 0;
+    sfr::serial::last_usb_packet_time = millis();
+    sfr::serial::radio_set_mode = constants::control::ROS_ALGO;
 }
 
-/** Stage a radio command in the SFR exactly as @c RadioSerialMonitor would, and select radio mode. */
+/** Stage a radio command in the SFR exactly as @c RadioSerialMonitor would, and request RC mode. */
 static void stage_radio_command(const uint8_t mainsail, const uint8_t rudder, const uint8_t jib, const uint8_t jib_side) {
-    sfr::serial::radio_buffer[layout::RADIO_FLAG] = 1;
+    sfr::serial::radio_buffer[layout::RADIO_SET_MODE] = constants::control::RC;
     sfr::serial::radio_buffer[layout::RADIO_MAINSAIL] = mainsail;
     sfr::serial::radio_buffer[layout::RADIO_RUDDER] = rudder;
     sfr::serial::radio_buffer[layout::RADIO_JIB] = jib;
     sfr::serial::radio_buffer[layout::RADIO_JIB_SIDE] = jib_side;
     sfr::serial::update_servos_radio = true;
-    sfr::serial::radio_flag = 1;
+    sfr::serial::radio_set_mode = constants::control::RC;
+}
+
+/** Stage an algorithm command in the SFR exactly as the @c Algorithms/ tasks would (does not change the mode). */
+static void stage_algo_command(const uint8_t mainsail, const uint8_t rudder, const uint8_t jib, const uint8_t jib_side) {
+    sfr::algo::mainsail_angle = mainsail;
+    sfr::algo::rudder_angle = rudder;
+    sfr::algo::jib_angle = jib;
+    sfr::algo::jib_side_flag = jib_side;
+    sfr::algo::update_servos_algo = true;
 }
 
 /** Run one USB command through the task and return, so a sweep can read the resulting PWM out of the SFR. */
@@ -63,7 +74,7 @@ static void test_radio_mode_ignores_pending_usb_command() {
 
     // Have a USB packet pending, but radio mode is engaged. USB packet shouldn't process.
     stage_usb_command(default_mainsail(), default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
-    sfr::serial::radio_flag = 1;
+    sfr::serial::radio_set_mode = constants::control::RC;
     sfr::serial::update_servos_radio = false;
     task.execute();
 
@@ -90,7 +101,7 @@ static void test_radio_mode_applies_a_fresh_radio_command() {
     TEST_ASSERT_FALSE_MESSAGE(sfr::serial::update_servos_radio, "The radio flag should be cleared once consumed");
 }
 
-static void test_usb_mode_applies_when_radio_flag_is_zero() {
+static void test_ros_mode_applies_a_fresh_usb_command() {
     ServoControlTask task;
     const uint8_t mainsail = default_mainsail();
     const uint8_t rudder = default_rudder();
@@ -102,17 +113,104 @@ static void test_usb_mode_applies_when_radio_flag_is_zero() {
     TEST_ASSERT_FALSE_MESSAGE(sfr::serial::update_servos_usb, "The USB flag should be cleared once consumed");
 }
 
+static void test_determ_mode_applies_a_fresh_algo_command() {
+    ServoControlTask task;
+    const uint8_t mainsail = default_mainsail();
+    const uint8_t rudder = default_rudder();
+    const uint8_t jib = default_jib();
+
+    stage_algo_command(mainsail, rudder, jib, constants::servo::JIB_SIDE_STB);
+    sfr::serial::radio_set_mode = constants::control::DETERM_ALGO;
+    task.execute();
+
+    TEST_ASSERT_EQUAL_UINT8(mainsail, sfr::servo::mainsail_angle);
+    TEST_ASSERT_EQUAL_UINT8(rudder, sfr::servo::rudder_angle);
+    TEST_ASSERT_EQUAL_UINT8(jib, sfr::servo::jib_angle);
+    TEST_ASSERT_EQUAL_UINT8(constants::servo::JIB_SIDE_STB, sfr::servo::jib_side_flag);
+    TEST_ASSERT_FALSE_MESSAGE(sfr::algo::update_servos_algo, "The algorithm flag should be cleared once consumed");
+}
+
 static void test_no_pending_command_moves_nothing() {
     ServoControlTask task;
     mock_reset_servos();
 
-    sfr::serial::radio_flag = 0;
-    sfr::serial::update_servos_usb = false;
-    sfr::serial::update_servos_radio = false;
-    task.execute();
+    for (const uint8_t mode : {constants::control::RC, constants::control::ROS_ALGO, constants::control::DETERM_ALGO}) {
+        sfr::serial::radio_set_mode = mode;
+        task.execute();
+    }
 
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, g_mock_servo_write_count[constants::servo::MAINSAIL_PIN],
-                                  "An idle cycle should not command any servo");
+                                  "An idle cycle should not command any servo, in any mode");
+}
+
+
+// Mode selection tests.
+static void test_boot_mode_is_rc() {
+    TEST_ASSERT_TRUE_MESSAGE(sfr::serial::radio_set_mode == constants::control::RC, "The boat must boot requesting RC");
+    TEST_ASSERT_TRUE_MESSAGE(sfr::control::mode == constants::control::RC, "The boat must boot in RC mode");
+}
+
+static void test_rc_requested_selects_rc_even_when_radio_is_stale() {
+    ServoControlTask task;
+    sfr::serial::radio_set_mode = constants::control::RC;
+    sfr::serial::last_usb_packet_time = millis();
+    mock_advance_millis(constants::serial::RX_STALE_AFTER_MS); // Radio has never been heard from.
+    task.execute();
+
+    TEST_ASSERT_TRUE_MESSAGE(sfr::control::mode == constants::control::RC, "A stale radio must not change the mode");
+}
+
+static void test_ros_requested_with_fresh_usb_selects_ros() {
+    ServoControlTask task;
+    sfr::serial::radio_set_mode = constants::control::ROS_ALGO;
+    sfr::serial::last_usb_packet_time = millis();
+    task.execute();
+
+    TEST_ASSERT_TRUE(sfr::control::mode == constants::control::ROS_ALGO);
+}
+
+static void test_ros_requested_with_stale_usb_falls_back_to_determ() {
+    ServoControlTask task;
+    sfr::serial::radio_set_mode = constants::control::ROS_ALGO;
+    sfr::serial::last_usb_packet_time = millis();
+
+    mock_advance_millis(constants::serial::RX_STALE_AFTER_MS - 1);
+    task.execute();
+    TEST_ASSERT_TRUE_MESSAGE(sfr::control::mode == constants::control::ROS_ALGO, "USB is not stale yet");
+
+    mock_advance_millis(1);
+    task.execute();
+    TEST_ASSERT_TRUE_MESSAGE(sfr::control::mode == constants::control::DETERM_ALGO, "Stale USB should fall back to DETERM");
+}
+
+static void test_stale_ros_fallback_applies_algo_not_usb_command() {
+    ServoControlTask task;
+    stage_usb_command(constants::servo::MAINSAIL_MIN_ANGLE, default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
+    stage_algo_command(constants::servo::MAINSAIL_MAX_ANGLE, default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
+    mock_advance_millis(constants::serial::RX_STALE_AFTER_MS);
+    task.execute();
+
+    TEST_ASSERT_EQUAL_UINT8_MESSAGE(constants::servo::MAINSAIL_MAX_ANGLE, sfr::servo::mainsail_angle,
+                                    "With USB stale, the algorithm's command should reach the servos");
+    TEST_ASSERT_TRUE_MESSAGE(sfr::serial::update_servos_usb, "The stale USB command should not be consumed");
+}
+
+static void test_determ_requested_ignores_fresh_usb() {
+    ServoControlTask task;
+    stage_usb_command(default_mainsail(), default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
+    sfr::serial::radio_set_mode = constants::control::DETERM_ALGO;
+    task.execute();
+
+    TEST_ASSERT_TRUE(sfr::control::mode == constants::control::DETERM_ALGO);
+    TEST_ASSERT_TRUE_MESSAGE(sfr::serial::update_servos_usb, "A fresh USB command must not apply in DETERM mode");
+}
+
+static void test_unknown_flag_behaves_as_rc() {
+    ServoControlTask task;
+    sfr::serial::radio_set_mode = 0xAB;
+    task.execute();
+
+    TEST_ASSERT_TRUE_MESSAGE(sfr::control::mode == constants::control::RC, "An unrecognized radio_set_mode should mean RC");
 }
 
 
@@ -320,8 +418,17 @@ void run_servo_control_tests() {
     Unity.TestFile = __FILE__; // Report failures against this file, not main.cpp.
     RUN_TEST(test_radio_mode_ignores_pending_usb_command);
     RUN_TEST(test_radio_mode_applies_a_fresh_radio_command);
-    RUN_TEST(test_usb_mode_applies_when_radio_flag_is_zero);
+    RUN_TEST(test_ros_mode_applies_a_fresh_usb_command);
+    RUN_TEST(test_determ_mode_applies_a_fresh_algo_command);
     RUN_TEST(test_no_pending_command_moves_nothing);
+
+    RUN_TEST(test_boot_mode_is_rc);
+    RUN_TEST(test_rc_requested_selects_rc_even_when_radio_is_stale);
+    RUN_TEST(test_ros_requested_with_fresh_usb_selects_ros);
+    RUN_TEST(test_ros_requested_with_stale_usb_falls_back_to_determ);
+    RUN_TEST(test_stale_ros_fallback_applies_algo_not_usb_command);
+    RUN_TEST(test_determ_requested_ignores_fresh_usb);
+    RUN_TEST(test_unknown_flag_behaves_as_rc);
 
     RUN_TEST(test_out_of_range_mainsail_angle_is_rejected);
     RUN_TEST(test_out_of_range_rudder_angle_is_rejected);
