@@ -16,7 +16,7 @@ This file is comparable to a `.ino` file you would see in the Arduino IDE (notic
 they would be in an Arduino file).
 
 ### MainControlLoop
-The MainControlLoop initializes and executes all monitors and control tasks.
+The MainControlLoop initializes and executes all monitors, algorithm tasks, and control tasks.
 
 ### SFR
 SFR stands for State Field Registry. It contains values that should be available to the entire boat (sensor values, 
@@ -25,8 +25,12 @@ serial buffer data, etc).
 ### Monitors
 Monitors read input from some source and update corresponding values in the SFR.
 
+### Algorithms
+The algorithms included here actually sail the boat: they update the SFR fields corresponding to the boat's sails 
+and rudder placement, based on the current state of the boat and other SFR values.
+
 ### Control Tasks
-Control tasks perform actions based on the current state of the boat or SFR values.
+Control tasks perform physical actions that interact with hardware based on the current state of the boat or SFR values.
 
 ### constants.hpp
 This file contains values that will never be dynamically changed (mainly physical parameters for a specific boat). This 
