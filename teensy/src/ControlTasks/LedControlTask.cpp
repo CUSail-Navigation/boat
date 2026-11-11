@@ -5,30 +5,36 @@ LedControlTask::LedControlTask() : num_flashes(0), code_length(0), code_start_ti
 }
 
 /**
- * Blinks a certain status LED code to indicate which serial input is in control, if that input is not stale
- * (we say that the input is stale if we haven't received a packet from it in the last @c RX_STALE_AFTER_MS).
+ * Blinks a certain status LED code to indicate which input is in control, if that input is not stale.
+ * We say that a serial input is stale if we have not received a packet from it in the last @c RX_STALE_AFTER_MS .
  *
  * The different types of status LED codes are:
- * - Radio in control (and not stale): 1 flash, then a pause.
- * - USB in control (and not stale): 2 flashes, then a pause.
- * - Otherwise (whichever input in control is stale): constant slow blink.
+ * - RC in control (and not stale): 1 flash, then a pause.
+ * - ROS algorithm in control (and not stale): 2 flashes, then a pause.
+ * - Deterministic algorithm in control (can never be stale): 3 flashes, then a pause.
+ * - Otherwise (RC is in control and is stale): constant slow blink.
  *
- * The LED should always blink while the Teensy is running: not blinking means the Teensy is not running.
+ * The LED should always blink while the Teensy is running; not blinking means the Teensy is not running.
  */
 void LedControlTask::execute() {
     const uint32_t now = millis();
 
     // The previous status code has finished; decide what the next one should be.
     if (now - code_start_time >= code_length) {
-        const bool radio_mode = sfr::serial::radio_flag != 0;
-        const bool stale = now - (radio_mode ? sfr::serial::last_radio_packet_time : sfr::serial::last_usb_packet_time)
-                           >= constants::serial::RX_STALE_AFTER_MS;
+        bool stale = false;
+        if (sfr::control::mode == constants::control::RC) {
+            stale = now - sfr::serial::last_radio_packet_time >= constants::serial::RX_STALE_AFTER_MS;
+        } else if (sfr::control::mode == constants::control::ROS_ALGO) {
+            stale = now - sfr::serial::last_usb_packet_time >= constants::serial::RX_STALE_AFTER_MS;
+        }
 
         if (stale) {
             num_flashes = 0;
             code_length = 2 * constants::led::STALE_BLINK_MS;
         } else {
-            num_flashes = radio_mode ? constants::led::RADIO_FLASHES : constants::led::USB_FLASHES;
+            num_flashes = sfr::control::mode == constants::control::ROS_ALGO ? constants::led::ROS_ALGO_FLASHES
+                        : sfr::control::mode == constants::control::RC       ? constants::led::RC_FLASHES
+                                                                             : constants::led::DETERM_ALGO_FLASHES;
             code_length = num_flashes * (constants::led::FLASH_ON_MS + constants::led::FLASH_GAP_MS)
                                       + constants::led::FLASH_PAUSE_MS;
         }
