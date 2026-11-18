@@ -1,6 +1,6 @@
 # Overview
 
-The `teensy` directory includes the code for our Teensy 4.0 microcontroller, which serves as the low-level controller 
+The `teensy` directory contains the code for our Teensy 4.0 microcontroller, which serves as the low-level controller 
 of our sailboat. The code manages the sensors, actuators (such as the servos for the sails and rudder), and 
 communicates with the Jetson via a serial connection.
 
@@ -8,8 +8,8 @@ communicates with the Jetson via a serial connection.
 
 
 ## Source Code (`src/`)
-This code is structured based on [Lodestar](https://github.com/shihaocao/lodestar), a small scale electric demonstrator for the belly-flop and 
-tail-sitting control algorithms necessary for SpaceX's Starship.
+This code is structured based on [Lodestar](https://github.com/shihaocao/lodestar), a small scale electric demonstrator 
+for the belly-flop and tail-sitting control algorithms necessary for SpaceX's Starship.
 
 ### Main (`main.cpp`)
 This file is comparable to a `.ino` file you would see in the Arduino IDE (notice setup and loop are exactly the same as 
@@ -38,8 +38,8 @@ prevents "magic numbers" in the codebase.
 
 
 ## Testing (`test/`)
-A directory intended for PlatformIO Test Runner and project tests. The tests currently included here run locally, with 
-no need to have a Teensy plugged in. Run them from the `test/` directory with the command `./run_tests.sh`.
+This is a directory intended for PlatformIO Test Runner and project tests. The tests included here run locally, with no 
+need to have a Teensy plugged in. Run them from the `test/` directory with the command `./run_tests.sh`.
 
 See [test/README.md](test/README.md) for more information on how this test suite works and what it covers.
 
@@ -63,7 +63,7 @@ Below are the steps to set up your development environment to upload code and ob
    - To view the serial monitor, press the electrical cord icon.
 
 
-## Developing with a Teensy with Docker & WSL on Windows:
+## Developing with Docker and WSL on Windows:
 The following steps expose a Windows COM port to WSL and then expose the WSL port to the Docker image running in WSL. 
 This was necessary to set up a test environment with the ROS2 codebase on a Windows 11 computer.
 

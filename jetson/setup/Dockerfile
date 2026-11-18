@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     python3-numpy \
     python3-pytest \
-    ros-humble-rosbridge-server \
+    ros-${ROS_DISTRO}-rosbridge-server \
     && rm -rf /var/lib/apt/lists/*
 
 # Workspace and application dependencies.
@@ -22,7 +22,7 @@ ENV PYTHONPATH=/opt/boat/python
 
 COPY setup_ros.sh /home/ros2_user/setup_ros.sh
 RUN chmod +x /home/ros2_user/setup_ros.sh \
-    && printf '\nsource /opt/ros/humble/setup.bash\nif [ -f /home/ros2_user/ros2_ws/install/setup.bash ]; then source /home/ros2_user/ros2_ws/install/setup.bash; fi\n' >> /etc/bash.bashrc
+    && printf '\nsource /opt/ros/${ROS_DISTRO}/setup.bash\nif [ -f /home/ros2_user/ros2_ws/install/setup.bash ]; then source /home/ros2_user/ros2_ws/install/setup.bash; fi\n' >> /etc/bash.bashrc
 
 ENTRYPOINT ["/home/ros2_user/setup_ros.sh"]
 CMD ["bash"]

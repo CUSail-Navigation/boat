@@ -6,10 +6,10 @@ namespace constants {
         constexpr uint8_t ANEMOMETER_PIN = 18;
     }
     /** PHYSICAL SERVO NOTES AND CONVENTIONS FROM 2025-2026 SEASON:
-     * - All servos can go from 600 PWM (a "SMALL" angle) to 2400 PWM (a "LARGE" angle).
+     * - All servos can go from 600 PWM (a small angle) to 2400 PWM (a large angle).
      * - In general, we choose ~800 as a baseline PWM to represent a minimum angle so that, just in case something
      *   physical changes on the boat, we can recalibrate the PWM that corresponds to this angle by dipping below this
-     *   baseline (until reaching @c SERVO_MIN_PULSE), and avoiding needing to re-screw the servos.
+     *   baseline (until reaching @c SERVO_MIN_PULSE), and avoid needing to re-screw the servos.
      * - Rudder: This servo can turn 0.5 times, but mech did something to cut this in half, so that the rudder will
      *           only go from -45 degrees (600 PWM) to 45 degrees (2400 PWM).
      * - Mainsail: This servo can turn 7.85 times.
