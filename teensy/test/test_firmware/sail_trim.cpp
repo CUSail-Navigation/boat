@@ -64,18 +64,23 @@ static void test_sail_angles_rise_from_no_go_edge_to_dead_downwind() {
     assert_non_decreasing(jib_sweep, "jib goal angle");
 }
 
-static void test_angles_are_symmetric_and_jib_side_follows_the_wind() {
+static void test_sail_angles_are_symmetric_across_the_boat() {
     SailTrimAlgo algorithm;
 
-    trim_for(algorithm, 90);
-    const uint8_t stb_mainsail = sfr::algo::mainsail_angle;
-    const uint8_t stb_jib = sfr::algo::jib_angle;
-    TEST_ASSERT_EQUAL_UINT8(constants::servo::JIB_SIDE_STB, sfr::algo::jib_side_flag);
+    for (uint16_t wind = 1; wind < 180; ++wind) {
+        trim_for(algorithm, wind);
+        const uint8_t mainsail = sfr::algo::mainsail_angle;
+        const uint8_t jib = sfr::algo::jib_angle;
 
-    trim_for(algorithm, 270);
-    TEST_ASSERT_EQUAL_UINT8_MESSAGE(stb_mainsail, sfr::algo::mainsail_angle, "Mainsail angle should be symmetric");
-    TEST_ASSERT_EQUAL_UINT8_MESSAGE(stb_jib, sfr::algo::jib_angle, "Jib angle should be symmetric");
-    TEST_ASSERT_EQUAL_UINT8(constants::servo::JIB_SIDE_PORT, sfr::algo::jib_side_flag);
+        trim_for(algorithm, 360 - wind);
+        if (sfr::algo::mainsail_angle != mainsail || sfr::algo::jib_angle != jib) {
+            char message[160];
+            snprintf(message, sizeof(message), "Wind at %u and %u degrees should trim the same, but got mainsail "
+                     "%u vs %u and jib %u vs %u.", static_cast<unsigned>(wind), static_cast<unsigned>(360 - wind),
+                     mainsail, sfr::algo::mainsail_angle, jib, sfr::algo::jib_angle);
+            TEST_FAIL_MESSAGE(message);
+        }
+    }
 }
 
 static void test_only_updates_once_per_period() {
@@ -86,7 +91,8 @@ static void test_only_updates_once_per_period() {
     sfr::anemometer::wind_angle = 0;
     mock_advance_millis(constants::algo::UPDATE_PERIOD_MS - 1);
     algorithm.execute();
-    TEST_ASSERT_FALSE_MESSAGE(sfr::algo::update_servos_algo, "No update should happen before UPDATE_PERIOD_MS has passed");
+    TEST_ASSERT_FALSE_MESSAGE(sfr::algo::update_servos_algo,
+                              "No update should happen before UPDATE_PERIOD_MS has passed");
     TEST_ASSERT_EQUAL_UINT8(constants::servo::MAINSAIL_MAX_ANGLE, sfr::algo::mainsail_angle);
 
     mock_advance_millis(1);
@@ -103,6 +109,6 @@ void run_sail_trim_tests() {
     RUN_TEST(test_dead_downwind_lets_sails_all_out);
     RUN_TEST(test_no_go_zone_edges);
     RUN_TEST(test_sail_angles_rise_from_no_go_edge_to_dead_downwind);
-    RUN_TEST(test_angles_are_symmetric_and_jib_side_follows_the_wind);
+    RUN_TEST(test_sail_angles_are_symmetric_across_the_boat);
     RUN_TEST(test_only_updates_once_per_period);
 }

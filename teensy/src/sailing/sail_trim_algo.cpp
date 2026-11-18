@@ -12,7 +12,7 @@ void SailTrimAlgo::execute() {
     last_update_time = now;
 
     uint16_t wind_angle = sfr::anemometer::wind_angle;
-    sfr::algo::jib_side_flag = wind_angle >= 180 ? constants::servo::JIB_SIDE_PORT : constants::servo::JIB_SIDE_STB;
+    sfr::algo::jib_side_flag = wind_angle >= 180 ? constants::servo::JIB_SIDE_STB : constants::servo::JIB_SIDE_PORT;
 
     // No longer care about side: map the wind to one side and compute the goal sail angle magnitude from that.
     if (wind_angle > 180) wind_angle = 360 - wind_angle;
