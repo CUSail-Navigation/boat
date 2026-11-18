@@ -27,17 +27,17 @@ void ServoControlTask::execute() {
                            sfr::serial::radio_buffer[3], sfr::serial::radio_buffer[4]);
             sfr::serial::update_servos_radio = false;
             break;
-        case constants::control::ROS_ALGO:
-            if (!sfr::serial::update_servos_usb) return;
-            apply_commands(sfr::serial::usb_buffer[0], sfr::serial::usb_buffer[1],
-                           sfr::serial::usb_buffer[2], sfr::serial::usb_buffer[3]);
-            sfr::serial::update_servos_usb = false;
-            break;
         case constants::control::DETERM_ALGO:
             if (!sfr::algo::update_servos_algo) return;
             apply_commands(sfr::algo::mainsail_angle, sfr::algo::rudder_angle,
                            sfr::algo::jib_angle, sfr::algo::jib_side_flag);
             sfr::algo::update_servos_algo = false;
+            break;
+        case constants::control::ROS_ALGO:
+            if (!sfr::serial::update_servos_usb) return;
+            apply_commands(sfr::serial::usb_buffer[0], sfr::serial::usb_buffer[1],
+                           sfr::serial::usb_buffer[2], sfr::serial::usb_buffer[3]);
+            sfr::serial::update_servos_usb = false;
             break;
         default: ;
     }

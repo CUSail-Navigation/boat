@@ -10,8 +10,8 @@ LedControlTask::LedControlTask() : num_flashes(0), code_length(0), code_start_ti
  *
  * The different types of status LED codes are:
  * - RC in control (and not stale): 1 flash, then a pause.
- * - ROS algorithm in control (and not stale): 2 flashes, then a pause.
- * - Deterministic algorithm in control (can never be stale): 3 flashes, then a pause.
+ * - Deterministic algorithm in control (can never be stale): 2 flashes, then a pause.
+ * - ROS algorithm in control (and not stale): 3 flashes, then a pause.
  * - Otherwise (RC is in control and is stale): constant slow blink.
  *
  * The LED should always blink while the Teensy is running; not blinking means the Teensy is not running.
@@ -32,9 +32,9 @@ void LedControlTask::execute() {
             num_flashes = 0;
             code_length = 2 * constants::led::STALE_BLINK_MS;
         } else {
-            num_flashes = sfr::control::mode == constants::control::ROS_ALGO ? constants::led::ROS_ALGO_FLASHES
-                        : sfr::control::mode == constants::control::RC       ? constants::led::RC_FLASHES
-                                                                             : constants::led::DETERM_ALGO_FLASHES;
+            num_flashes = sfr::control::mode == constants::control::RC          ? constants::led::RC_FLASHES
+                        : sfr::control::mode == constants::control::DETERM_ALGO ? constants::led::DETERM_ALGO_FLASHES
+                                                                                : constants::led::ROS_ALGO_FLASHES;
             code_length = num_flashes * (constants::led::FLASH_ON_MS + constants::led::FLASH_GAP_MS)
                                       + constants::led::FLASH_PAUSE_MS;
         }

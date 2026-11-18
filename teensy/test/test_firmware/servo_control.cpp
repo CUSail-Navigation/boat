@@ -1,7 +1,7 @@
 /**
  * SERVO CONTROL TESTS -- ServoControlTask.
  * Tests in this file cover two main areas of functionality:
- *  1. Mode arbitration (radio_set_mode picks RC, ROS, or the deterministic algorithm; ROS falls back to the
+ *  1. Mode arbitration (radio_set_mode picks RC, the deterministic algorithm, or ROS; ROS falls back to the
  *     deterministic algorithm when USB is stale; a fresh command from whichever input is in control applies
  *     and clears its own update flag; an idle cycle with nothing pending commands no servo at all).
  *  2. Angle to PWM mapping.
@@ -134,7 +134,7 @@ static void test_no_pending_command_moves_nothing() {
     ServoControlTask task;
     mock_reset_servos();
 
-    for (const uint8_t mode : {constants::control::RC, constants::control::ROS_ALGO, constants::control::DETERM_ALGO}) {
+    for (const uint8_t mode : {constants::control::RC, constants::control::DETERM_ALGO, constants::control::ROS_ALGO}) {
         sfr::serial::radio_set_mode = mode;
         task.execute();
     }

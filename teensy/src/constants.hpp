@@ -64,8 +64,8 @@ namespace constants {
     }
     namespace control {
         constexpr uint8_t RC = 0;
-        constexpr uint8_t ROS_ALGO = 1;
-        constexpr uint8_t DETERM_ALGO = 2;
+        constexpr uint8_t DETERM_ALGO = 1;
+        constexpr uint8_t ROS_ALGO = 2;
     }
     namespace algo {
         constexpr uint16_t NO_GO_WIDTH = 90;
@@ -99,8 +99,8 @@ namespace constants {
         constexpr uint8_t LED_PIN = 13;
 
         constexpr uint8_t RC_FLASHES = control::RC + 1;
-        constexpr uint8_t ROS_ALGO_FLASHES = control::ROS_ALGO + 1;
         constexpr uint8_t DETERM_ALGO_FLASHES = control::DETERM_ALGO + 1;
+        constexpr uint8_t ROS_ALGO_FLASHES = control::ROS_ALGO + 1;
         constexpr uint32_t FLASH_ON_MS = 150;
         constexpr uint32_t FLASH_GAP_MS = 150;
         constexpr uint32_t FLASH_PAUSE_MS = 1000;
