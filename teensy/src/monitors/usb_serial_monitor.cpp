@@ -1,4 +1,4 @@
-#include "USBSerialMonitor.hpp"
+#include "usb_serial_monitor.hpp"
 
 /** Reads and assembles incoming packets from the computer connected via @c Serial into @c usb_buffer . */
 void USBSerialMonitor::execute() {

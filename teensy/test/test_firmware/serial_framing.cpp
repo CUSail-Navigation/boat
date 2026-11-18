@@ -4,8 +4,8 @@
  */
 #include "test_support.h"
 #include "suites.hpp"
-#include "Monitors/USBSerialMonitor.hpp"
-#include "Monitors/RadioSerialMonitor.hpp"
+#include "monitors/usb_serial_monitor.hpp"
+#include "monitors/radio_serial_monitor.hpp"
 
 
 // Assumptions the framing depends on -- if one of these ever fails, the other tests in this file are meaningless.
@@ -47,14 +47,15 @@ static void test_radio_valid_packet_is_accepted() {
 
 static void test_radio_publishes_mode_flag_from_payload() {
     std::vector<uint8_t> payload = make_payload(constants::serial::RADIO_BUFFER_LEN);
-    payload[layout::RADIO_FLAG] = 0;
+    constexpr uint8_t ros_flag = constants::control::ROS_ALGO; // Not the boot default.
+    payload[layout::RADIO_SET_MODE] = ros_flag;
     feed(Serial2, frame_packet(payload));
 
     RadioSerialMonitor monitor;
     monitor.execute();
 
-    TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, sfr::serial::radio_flag,
-                                    "radio_flag must mirror payload byte 0 so the boat can switch out of radio mode");
+    TEST_ASSERT_EQUAL_UINT8_MESSAGE(ros_flag, sfr::serial::radio_set_mode,
+                                    "radio_set_mode must mirror payload byte 0 so the boat can switch out of radio mode");
 }
 
 static void test_packet_split_across_execute_calls_still_completes() {

@@ -18,8 +18,8 @@ namespace layout {
     constexpr size_t USB_JIB       = 2;
     constexpr size_t USB_JIB_SIDE  = 3;
 
-    // Radio payload: [radio_flag, mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
-    constexpr size_t RADIO_FLAG      = 0;
+    // Radio payload: [radio_set_mode, mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
+    constexpr size_t RADIO_SET_MODE  = 0;
     constexpr size_t RADIO_MAINSAIL  = 1;
     constexpr size_t RADIO_RUDDER    = 2;
     constexpr size_t RADIO_JIB       = 3;
@@ -32,12 +32,12 @@ namespace layout {
 inline void reset_sfr() {
     sfr::anemometer::wind_angle = 0;
 
-    sfr::servo::rudder_angle = 0;
     sfr::servo::mainsail_angle = 0;
+    sfr::servo::rudder_angle = 0;
     sfr::servo::jib_angle = 0;
     sfr::servo::jib_side_flag = 0;
-    sfr::servo::rudder_pwm = 0;
     sfr::servo::mainsail_pwm = 0;
+    sfr::servo::rudder_pwm = 0;
     sfr::servo::jib_port_pwm = 0;
     sfr::servo::jib_stb_pwm = 0;
 
@@ -45,10 +45,18 @@ inline void reset_sfr() {
     sfr::serial::update_servos_radio = false;
     memset(sfr::serial::usb_buffer, 0, sizeof(sfr::serial::usb_buffer));
     memset(sfr::serial::radio_buffer, 0, sizeof(sfr::serial::radio_buffer));
-    sfr::serial::radio_flag = 1;
+    sfr::serial::radio_set_mode = constants::control::RC;
     sfr::serial::dropped_packets = 0;
     sfr::serial::last_usb_packet_time = -constants::serial::RX_STALE_AFTER_MS;
     sfr::serial::last_radio_packet_time = -constants::serial::RX_STALE_AFTER_MS;
+
+    sfr::algo::mainsail_angle = constants::servo::MAINSAIL_MAX_ANGLE;
+    sfr::algo::rudder_angle = constants::servo::RUDDER_MID_ANGLE;
+    sfr::algo::jib_angle = constants::servo::JIB_MAX_ANGLE;
+    sfr::algo::jib_side_flag = constants::servo::JIB_SIDE_PORT;
+    sfr::algo::update_servos_algo = false;
+
+    sfr::control::mode = constants::control::RC;
 }
 
 /** Clear the fake clock, both serial ports, and all recorded pin/servo activity. */
