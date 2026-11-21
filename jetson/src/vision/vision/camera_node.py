@@ -1,8 +1,10 @@
 """
-Detect buoys with YOLO on the RealSense color stream and publish each detection with
-its position from the aligned depth stream. Frames are only processed in search mode.
+Detect buoys on the RealSense color stream, with YOLO or an HSV color threshold, and
+publish each detection with its position from the aligned depth stream. Frames are only
+processed in search mode.
 
-Needs pyrealsense2, torch and ultralytics, which are installed on the Jetson only.
+Needs pyrealsense2, which is installed on the Jetson only. The YOLO detector also needs
+torch and ultralytics; the HSV detector does not.
 """
 
 import math
@@ -23,7 +25,6 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile
 from std_msgs.msg import Float32, String
 
-from vision.buoy_detection import YOLOBuoyDetector
 from vision.depth import box_depth, box_width
 
 MODEL_FILE = "buoy2.pt"
@@ -45,8 +46,12 @@ class BuoyDetectorNode(Node):
         super().__init__("buoy_detection")
 
         params = {
+            "detector": "yolo",  # "yolo" or "hsv"
             "model_path": "",  # empty = default_model_path()
-            "detection_threshold": 0.85,
+            "detection_threshold": 0.85,  # YOLO confidence
+            "hsv_lower": [0, 127, 63],  # orange, from sailbot's old detector
+            "hsv_upper": [20, 255, 255],
+            "hsv_min_area": 100,  # px, smaller color blobs are ignored
             "timer_period": 0.1,  # s between processed frames
             "show_frames": False,
             "frame_timeout_ms": 1000,
@@ -84,11 +89,7 @@ class BuoyDetectorNode(Node):
         self.depth_scale = profile.get_device().first_depth_sensor().get_depth_scale()
         self.align = rs.align(rs.stream.color)
 
-        model_path = self.p["model_path"] or default_model_path()
-        self.get_logger().info(f"Loading buoy model from {model_path}")
-        self.detector = YOLOBuoyDetector(
-            model_path, self.p["detection_threshold"], self.p["show_frames"]
-        )
+        self.detector = self.make_detector()
 
         self.current_mode = "manual"
         latched = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
@@ -96,6 +97,32 @@ class BuoyDetectorNode(Node):
 
         self.timer = self.create_timer(self.p["timer_period"], self.process_frame)
         self.get_logger().info("Buoy detector started")
+
+    def make_detector(self):
+        if self.p["detector"] == "hsv":
+            from vision.hsv_detection import HSVBuoyDetector
+
+            self.get_logger().info(
+                f"Using HSV detector, range {self.p['hsv_lower']} to {self.p['hsv_upper']}"
+            )
+            return HSVBuoyDetector(
+                self.p["hsv_lower"],
+                self.p["hsv_upper"],
+                self.p["hsv_min_area"],
+                self.p["show_frames"],
+            )
+        if self.p["detector"] != "yolo":
+            raise ValueError(
+                f"detector must be 'yolo' or 'hsv', got '{self.p['detector']}'"
+            )
+        # Imported here so the HSV detector runs without torch and ultralytics.
+        from vision.buoy_detection import YOLOBuoyDetector
+
+        model_path = self.p["model_path"] or default_model_path()
+        self.get_logger().info(f"Loading buoy model from {model_path}")
+        return YOLOBuoyDetector(
+            model_path, self.p["detection_threshold"], self.p["show_frames"]
+        )
 
     def process_frame(self):
         """Look for a buoy in the latest frame and publish its position if found."""
@@ -180,6 +207,11 @@ class BuoyDetectorNode(Node):
             )
 
     def detection_threshold_callback(self, msg):
+        if self.p["detector"] != "yolo":
+            self.get_logger().warn(
+                "Detection threshold only applies to YOLO; set hsv_min_area instead."
+            )
+            return
         if not 0.0 < msg.data < 1.0:
             self.get_logger().warn(
                 f"Detection threshold must be between 0 and 1, got {msg.data}"

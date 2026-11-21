@@ -2,6 +2,10 @@
 
 buoy_detection:
   ros__parameters:
+    detector: "yolo"  # "hsv" needs no torch/ultralytics, but detects anything orange
+    hsv_lower: [0, 127, 63]
+    hsv_upper: [20, 255, 255]
+    hsv_min_area: 100  # px
     model_path: ""  # empty = buoy2.pt installed with the vision package
     detection_threshold: 0.85
     show_frames: false
