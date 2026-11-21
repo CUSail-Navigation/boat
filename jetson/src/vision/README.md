@@ -13,6 +13,15 @@ the package without them; only `vision/depth.py` is tested there):
 - `torch` from the Jetson wheel index (`https://pypi.jetson-ai-lab.io/jp6/cu126`)
 - `ultralytics` and `numpy<2`
 
+`jetson/setup/Dockerfile.jetson` builds a Jetson image with all of them. On the Jetson, from the
+repository root:
+
+```bash
+docker build -f jetson/setup/Dockerfile.jetson -t boat-jetson jetson/setup
+docker run -it --rm --name boat --runtime nvidia --privileged --network host \
+  -v /dev:/dev -v "$(pwd)/jetson/src:/home/ros2_user/ros2_ws/src" boat-jetson
+```
+
 ## Model weights
 
 `*.pt` files are gitignored. Copy `buoy2.pt` into `jetson/src/vision/vision/` **before** `colcon build`
