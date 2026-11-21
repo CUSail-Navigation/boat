@@ -1,0 +1,17 @@
+# Buoy search on the water.
+
+buoy_detection:
+  ros__parameters:
+    model_path: ""  # empty = buoy2.pt installed with the vision package
+    detection_threshold: 0.85
+    show_frames: false
+    save_frames: false
+
+buoy_search:
+  ros__parameters:
+    search_center_lat: 42.44415534324632  # used when set_mode sends no center
+    search_center_lon: -76.48367002684182
+    search_radius: 100.0  # m, used when set_mode sends no radius
+    leg_spacing: 16.0  # m, about 2x the range YOLO reliably detects the buoy at
+    prior_center_std: 0.0  # m, > 0 searches near the center first
+    heading_convention: "math"  # check /imu on hardware: "math" or "compass"

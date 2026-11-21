@@ -1,0 +1,12 @@
+# Set the boat's mission mode.
+string mode  # "manual" or "search"
+
+# For "search": the center of the area (x = longitude, y = latitude) and its radius.
+# An all-zero center uses the search node's configured center.
+# A radius of 0 uses the search node's configured radius.
+geometry_msgs/Point search_center_point
+float64 search_radius  # m
+
+---
+bool success
+string message

@@ -2,7 +2,7 @@
 <package format="3">
   <name>mission</name>
   <version>0.0.1</version>
-  <description>Mission waypoint queue for boat.</description>
+  <description>Mission logic for boat: waypoint queue, modes and buoy search.</description>
   <maintainer email="ericcai32@gmail.com">ericcai32</maintainer>
   <license>Apache License 2.0</license>
 
@@ -10,6 +10,10 @@
   <exec_depend>rclpy</exec_depend>
   <exec_depend>rcl_interfaces</exec_depend>
   <exec_depend>interface</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
   <test_depend>python3-pytest</test_depend>
 
   <export>
