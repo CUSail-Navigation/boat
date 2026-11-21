@@ -16,4 +16,4 @@ buoy_search:
     leg_spacing: 10.0  # m, about 2x the range YOLO reliably detects the buoy at
     wind_aligned_pattern: false
     search_direction: 0.0  # legs run perpendicular to this: 0 = north-south legs
-    heading_convention: "math"
+    heading_convention: "compass"

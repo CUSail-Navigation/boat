@@ -60,7 +60,7 @@ def boat():
                 gps_pub.publish(
                     NavSatFix(latitude=CENTER[0] - 0.0005, longitude=CENTER[1] - 0.0005)
                 )
-                imu_pub.publish(Vector3(z=90.0))
+                imu_pub.publish(Vector3(z=0.0))
                 executor.spin_once(timeout_sec=0.05)
             assert predicate(), "Timed out waiting for ROS"
 
@@ -134,3 +134,21 @@ def test_plain_search_drops_previous_custom_area(boat):
     call(set_mode, SetModeWithParams.Request(mode="manual"))
     call(set_mode, SetModeWithParams.Request(mode="search"))
     spin_until(lambda: search.search_radius == 40.0)  # the configured radius
+
+
+@pytest.mark.parametrize(
+    ("heading", "wind_angle", "wind_from_math"),
+    [
+        (0.0, 0.0, 90.0),  # bow north, wind on the bow: from the north
+        (0.0, 90.0, 0.0),  # bow north, wind from starboard: from the east
+        (90.0, 0.0, 0.0),  # bow east, wind on the bow: from the east
+        (180.0, 270.0, 0.0),  # bow south, wind from port: from the east
+    ],
+)
+def test_wind_from_uses_compass_heading_and_bow_relative_wind(
+    boat, heading, wind_angle, wind_from_math
+):
+    search = boat[0]
+    search.heading = 90.0 - heading  # imu_callback's compass -> math conversion
+    search.wind_dir = wind_angle
+    assert search.wind_from() % 360 == pytest.approx(wind_from_math)

@@ -14,4 +14,4 @@ buoy_search:
     search_radius: 100.0  # m, used when set_mode sends no radius
     leg_spacing: 16.0  # m, about 2x the range YOLO reliably detects the buoy at
     prior_center_std: 0.0  # m, > 0 searches near the center first
-    heading_convention: "math"  # check /imu on hardware: "math" or "compass"
+    heading_convention: "compass"  # imu z is compass: north = 0, clockwise

@@ -5,7 +5,7 @@ Buoy search: the waypoint queue, mode manager, buoy search and camera.
     ros2 launch bringup search.launch.py config:=search_land_test.yaml
     ros2 launch bringup search.launch.py camera:=false
 
-Sensor (/gps, /imu, wind) and Teensy nodes are not part of this launch yet.
+Sensor (/gps, /imu) and Teensy (wind_angle) nodes are not part of this launch yet.
 """
 
 from launch import LaunchDescription

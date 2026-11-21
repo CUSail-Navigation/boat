@@ -65,7 +65,7 @@ PARAMS = {
     "nominal_speed": 1.0,  # m/s, only for leg timeouts
     "leg_timeout_factor": 3.0,  # replan when a leg takes this many times too long
     # Sensor conventions and camera mounting
-    "heading_convention": "math",  # 'math' (CCW from east) or 'compass' (CW from north)
+    "heading_convention": "compass",  # 'compass' (CW from north) or 'math' (CCW from east)
     "camera_hfov_deg": 85.2,
     "camera_yaw_offset_deg": 0.0,  # camera axis relative to bow, clockwise positive
     "camera_forward_offset": 0.0,  # m, camera ahead of GPS antenna
@@ -120,7 +120,7 @@ class BuoySearch(Node):
 
         self.create_subscription(NavSatFix, "/gps", self.gps_callback, 10)
         self.create_subscription(Vector3, "/imu", self.imu_callback, 10)
-        self.create_subscription(Int32, "wind", self.wind_callback, 10)
+        self.create_subscription(Int32, "wind_angle", self.wind_callback, 10)
         self.create_subscription(
             BuoyDetection, "/buoy_detection", self.buoy_detection_callback, 10
         )
@@ -563,15 +563,21 @@ class BuoySearch(Node):
         self.set_state(SearchState.SEARCHING, "search started")
         self.plan_next_leg()
 
+    def wind_from(self):
+        """
+        Absolute direction the wind comes from (math convention), or None. wind_angle is
+        apparent wind "from", clockwise from the bow, so it is subtracted from the
+        counter-clockwise math heading.
+        """
+        if self.wind_dir is None or self.heading is None:
+            return None
+        return (self.heading - self.wind_dir) % 360
+
     def pattern_direction(self) -> float:
         """Cross-wind legs when wind is known, else the configured direction."""
-        if (
-            self.p["wind_aligned_pattern"]
-            and self.wind_dir is not None
-            and self.heading is not None
-        ):
-            # Wind is relative to the bow; this is the absolute wind direction.
-            return (self.wind_dir + self.heading) % 360
+        wind_from = self.wind_from()
+        if self.p["wind_aligned_pattern"] and wind_from is not None:
+            return wind_from
         return self.p["search_direction"]
 
     def observe_coverage(self, dt: float):
@@ -592,9 +598,7 @@ class BuoySearch(Node):
 
     def plan_leg(self):
         here = self.position if self.position is not None else self.center
-        upwind = None
-        if self.wind_dir is not None and self.heading is not None:
-            upwind = (self.wind_dir + self.heading + 180) % 360
+        upwind = self.wind_from()  # sailing toward where the wind comes from
         return self.coverage.plan_leg(
             here[0],
             here[1],
