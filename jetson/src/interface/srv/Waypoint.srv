@@ -1,0 +1,11 @@
+# Commands: "get", "set", "pop". Only set uses expected_version and waypoints.
+string command
+# A stale version is rejected. An empty waypoint array clears the queue.
+string expected_version
+Waypoint[] waypoints
+---
+bool success
+string error
+# Current queue snapshot, including after rejected requests.
+string version
+Waypoint[] waypoints
