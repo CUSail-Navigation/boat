@@ -2,13 +2,12 @@
 Buoy search: the waypoint queue, mode manager, buoy search and camera.
 
     ros2 launch bringup search.launch.py
-    ros2 launch bringup search.launch.py config:=search_land_test.yaml
     ros2 launch bringup search.launch.py camera:=false
 
 With lake_test:=true it also starts lake_test.launch.py (VectorNav, Teensy, waypoint
 service, RL waypoint follower and rosbridge) and uses that waypoint service:
 
-    ros2 launch bringup search.launch.py lake_test:=true config:=search_land_test.yaml
+    ros2 launch bringup search.launch.py lake_test:=true
 """
 
 from launch import LaunchDescription
